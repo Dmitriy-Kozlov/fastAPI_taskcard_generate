@@ -1,0 +1,17 @@
+FROM python:3.10-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache \
+    libreoffice \
+    ttf-dejavu \
+    ttf-freefont
+
+COPY requirements.txt /app/requirements.txt
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+#RUN apk add libreoffice
+

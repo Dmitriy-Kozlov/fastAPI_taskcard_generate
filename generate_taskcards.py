@@ -5,6 +5,7 @@ import re
 from collections import defaultdict
 import os
 from docx import Document
+import subprocess
 
 #
 # class AircraftRegistration(Enum):
@@ -556,6 +557,22 @@ def generate_taskcards(aircraft_type, subtype, aircraft, mpd_tasks_list, airline
         output_docx = os.path.join(output_dir, f"{aircraft_type}{subtype}_{mpd_key}.docx")
         doc.save(output_docx)
         files.append(output_docx)
+
+        filename_pdf = f"{aircraft_type}{subtype}_{mpd_key}.pdf"
+        filepath_pdf = os.path.join(output_dir, filename_pdf)
+
+        try:
+            subprocess.run([
+                "libreoffice",
+                "--headless",
+                "--convert-to", "pdf",
+                "--outdir", output_dir,
+                output_docx
+            ], check=True)
+            files.append(filepath_pdf)
+        except subprocess.CalledProcessError as e:
+            print(f"PDF generation failed: {e}")
+            filepath_pdf = None
 
     return mpd_lost, mpd_create, files
 
