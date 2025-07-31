@@ -10,8 +10,18 @@ import os
 from generate_taskcards import generate_taskcards
 from fleet import all_airlines
 from utils import zip_files
+from init_superuser import init_superuser
+
+from users.router import router as user_router
 
 app = FastAPI()
+
+app.include_router(user_router)
+
+@app.on_event("startup")
+async def startup_event():
+    await init_superuser()
+
 
 # Dependency to get DB session
 
