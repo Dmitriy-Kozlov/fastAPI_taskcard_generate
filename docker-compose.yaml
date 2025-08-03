@@ -14,7 +14,9 @@ services:
 #    command:  sh -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     depends_on:
       - db
-#    volumes:
+    volumes:
+      - .:/app
+#      - ./migrations:/app/migrations
 #      - mediafiles:/app/media
 #    networks:
 #      - webnet
@@ -24,8 +26,10 @@ services:
     environment:
       - POSTGRES_PASSWORD=admin
       - POSTGRES_DB=postgres
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+#    volumes:
+#      - pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
 #    networks:
 #      - webnet
 
@@ -44,7 +48,7 @@ services:
 #networks:
 #  webnet:
 #
-volumes:
-  pgdata:
+#volumes:
+#  pgdata:
 #  mediafiles:
 

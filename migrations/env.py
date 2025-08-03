@@ -4,6 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from users.models import User
+from all_fleet.models import Airline, AircraftType, Aircraft
 from database import Base
 
 from alembic import context

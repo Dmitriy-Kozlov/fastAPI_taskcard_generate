@@ -13,10 +13,13 @@ from utils import zip_files
 from init_superuser import init_superuser
 
 from users.router import router as user_router
+from all_fleet.router import router as fleet_router
 
 app = FastAPI()
 
 app.include_router(user_router)
+app.include_router(fleet_router)
+
 
 @app.on_event("startup")
 async def startup_event():
