@@ -481,7 +481,8 @@ def merge_AMM_MPD(aircraft_type):
         json.dump(mpd_data, f, indent=2, ensure_ascii=False)
 
 
-def generate_taskcards(aircraft_type, subtype, aircraft, mpd_tasks_list, airline_template):
+# def generate_taskcards(aircraft_type, subtype, aircraft, mpd_tasks_list, airline_template):
+def generate_taskcards(aircraft_type, aircraft, mpd_tasks_list, airline_template, subtype=""):
     with open(f"{aircraft_type}_merged_result.json", "r", encoding="utf-8") as f:
         data = json.load(f)
 

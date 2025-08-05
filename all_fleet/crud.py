@@ -11,13 +11,57 @@ from sqlalchemy.future import select
 
 from base.crud import BaseCRUD
 from database import async_session_maker
-from all_fleet.schemas import AirlineRead, AirlineCreate, AircraftTypeRead, AircraftTypeCreate, AircraftRead, AircraftCreate
+from all_fleet.schemas import AirlineRead, AirlineCreate, AircraftTypeRead, AircraftTypeCreate, AircraftRead, AircraftCreate, AirlineWithAircrafts
 from all_fleet.models import Airline, AircraftType, Aircraft
-
+from sqlalchemy.orm import joinedload
 
 
 class AirlineCRUD(BaseCRUD):
     model = Airline
+
+    @classmethod
+    async def find_airline_with_aircrafts(cls, airline_id: int):
+        async with async_session_maker() as session:
+            query = select(cls.model).options(
+                joinedload(cls.model.aircrafts).joinedload(Aircraft.aircraft_type)
+            ).filter_by(id=airline_id)
+
+            result = await session.execute(query)
+            result = result.unique()
+            airline = result.scalar_one_or_none()
+
+            if not airline:
+                raise HTTPException(status_code=404, detail="Airline not found")
+
+            return airline
+
+    @classmethod
+    async def get_all_airlines_dict(cls) -> dict:
+        async with async_session_maker() as session:
+            query = (
+                select(cls.model)
+                    .options(
+                    joinedload(Airline.aircrafts).joinedload(Aircraft.aircraft_type)
+                )
+            )
+            result = await session.execute(query)
+            result = result.unique()
+            airlines = result.scalars().all()
+
+            all_airlines = {}
+
+            for airline in airlines:
+                airline_name = airline.airline
+                all_airlines[airline_name] = {}
+
+                for aircraft in airline.aircrafts:
+                    reg_no = aircraft.registration_no
+                    ac_type = aircraft.aircraft_type.aircraft_type
+                    all_airlines[airline_name][reg_no] = {"type": ac_type}
+
+            return all_airlines
+
+
 
 
 class AircraftTypeCRUD(BaseCRUD):

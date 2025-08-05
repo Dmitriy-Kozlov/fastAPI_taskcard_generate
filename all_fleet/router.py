@@ -4,7 +4,7 @@ from fastapi import Depends, APIRouter, Body
 from pydantic import Field
 
 from all_fleet.crud import AirlineCRUD, AircraftTypeCRUD, AircraftCRUD
-from all_fleet.schemas import AirlineRead, AirlineCreate, AircraftTypeRead, AircraftTypeCreate, AircraftRead, AircraftCreate
+from all_fleet.schemas import AirlineRead, AirlineCreate, AircraftTypeRead, AircraftTypeCreate, AircraftRead, AircraftCreate, AirlineWithAircrafts
 
 
 router = APIRouter(
@@ -13,18 +13,30 @@ router = APIRouter(
 )
 
 
-@router.get("/airlines/all", response_model=list[AirlineRead])
+# @router.get("/airlines/all", response_model=list[AirlineRead])
+# # async def get_all_users(user=Depends(get_current_active_user)):
+# async def get_all_airlines():
+#     airlines = await AirlineCRUD.find_all()
+#     return [AirlineRead.from_orm(airline) for airline in airlines]
+
+@router.get("/airlines/all")
 # async def get_all_users(user=Depends(get_current_active_user)):
 async def get_all_airlines():
-    airlines = await AirlineCRUD.find_all()
-    return [AirlineRead.from_orm(airline) for airline in airlines]
+    airlines = await AirlineCRUD.get_all_airlines_dict()
+    return airlines
 
 
-@router.get("/airlines/{id}", response_model=AirlineRead)
-# async def get_airline_by_id(id: int, user=Depends(get_current_active_user)):
-async def get_airline_by_id(id: int):
-    result = await AirlineCRUD.find_one_or_none_by_id(id)
-    return result
+# @router.get("/airlines/{id}", response_model=AirlineRead)
+# # async def get_airline_by_id(id: int, user=Depends(get_current_active_user)):
+# async def get_airline_by_id(id: int):
+#     result = await AirlineCRUD.find_one_or_none_by_id(id)
+#     return result
+
+@router.get("/airlines/{airline_id}", response_model=AirlineWithAircrafts)
+# @router.get("/airlines/{airline_id}")
+async def get_airline_with_aircrafts(airline_id: int):
+    airline = await AirlineCRUD.find_airline_with_aircrafts(airline_id)
+    return airline
 
 
 @router.post("/airlines/create", response_model=AirlineRead)

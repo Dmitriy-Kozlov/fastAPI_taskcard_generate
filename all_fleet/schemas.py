@@ -33,12 +33,12 @@ class AircraftTypeCreate(AircraftTypeBase):
 
 class AircraftBase(BaseModel):
     registration_no: str
-    airline_id: int
-    aircraft_type_id: int
 
 
 class AircraftRead(AircraftBase):
     id: int
+    airline_id: int
+    aircraft_type_id: int
 
     class Config:
         from_attributes = True
@@ -46,3 +46,11 @@ class AircraftRead(AircraftBase):
 
 class AircraftCreate(AircraftBase):
     pass
+
+
+class AircraftWithType(AircraftBase):
+    aircraft_type: AircraftTypeBase
+
+
+class AirlineWithAircrafts(AirlineBase):
+    aircrafts: list[AircraftWithType]
