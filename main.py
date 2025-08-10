@@ -4,21 +4,24 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
 
-from schemas import AircraftIn
+from schemas import AircraftIn, AircraftInNew
 import os
 
-from generate_taskcards import generate_taskcards
+from generate_taskcards import generate_taskcards, generate_taskcards_new
 from fleet import all_airlines
 from utils import zip_files
 from init_superuser import init_superuser
 from all_fleet.crud import AirlineCRUD
+from airbus_data.crud import TemplateFileCRUD
 from users.router import router as user_router
 from all_fleet.router import router as fleet_router
+from airbus_data.router import router as airbus_data_router
 
 app = FastAPI()
 
 app.include_router(user_router)
 app.include_router(fleet_router)
+app.include_router(airbus_data_router)
 
 
 @app.on_event("startup")
@@ -28,6 +31,36 @@ async def startup_event():
 
 # Dependency to get DB session
 
+@app.post("/generate-taskcards_new")
+async def generate(data: AircraftInNew):
+    mpd_tasks_list = data.taskcards
+    aircraft = data.registration
+    current_airline_id = data.airline
+    new_airline = await AirlineCRUD.find_airline_with_aircrafts_and_template(current_airline_id)
+    airline_name = new_airline.airline
+    if not any(ac.registration_no == aircraft for ac in (new_airline.aircrafts or [])):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Aircraft '{aircraft}' not found for airline '{airline_name}'"
+        )
+    atype = next((ac.aircraft_type.aircraft_type
+                  for ac in (new_airline.aircrafts or [])
+                  if ac.registration_no == aircraft), None)
+    if not new_airline.template:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No active template for airline '{airline_name}'"
+        )
+    template_id = new_airline.template.id
+
+    lost, create, files = generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id)
+    zip_name = f"taskcards_{uuid.uuid4().hex}.zip"
+    zip_path = zip_files(files, zip_name)
+    response = {"created taskcards": create,
+                "no taskcard found": lost,
+                "download_url": f"/download/{zip_name}"}
+
+    return response
 
 @app.post("/generate-taskcards")
 async def generate(data: AircraftIn):
@@ -42,7 +75,7 @@ async def generate(data: AircraftIn):
             status_code=400,
             detail=f"Unknown airline: '{current_airline}'"
         )
-
+    # template_airline_file_id = TemplateFileCRUD.get_template_for_airline()
     # Проверка: существует ли ВС в списке у этой авиакомпании
     # if aircraft not in all_airlines[current_airline]:
     if aircraft not in new_airlines[current_airline]:
@@ -67,6 +100,7 @@ async def generate(data: AircraftIn):
                 "download_url": f"/download/{zip_name}"}
 
     return response
+
 
 
 @app.get("/download/{filename}")

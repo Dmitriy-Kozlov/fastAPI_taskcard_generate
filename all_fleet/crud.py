@@ -8,22 +8,25 @@ from fastapi.security import OAuth2PasswordBearer
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.future import select
-
+from airbus_data.models import TaskTemplate
 from base.crud import BaseCRUD
 from database import async_session_maker
-from all_fleet.schemas import AirlineRead, AirlineCreate, AircraftTypeRead, AircraftTypeCreate, AircraftRead, AircraftCreate, AirlineWithAircrafts
+# from all_fleet.schemas import AirlineRead, AirlineCreate, AircraftTypeRead, AircraftTypeCreate, AircraftRead, AircraftCreate
 from all_fleet.models import Airline, AircraftType, Aircraft
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, with_loader_criteria
 
 
 class AirlineCRUD(BaseCRUD):
     model = Airline
 
     @classmethod
-    async def find_airline_with_aircrafts(cls, airline_id: int):
+    async def find_airline_with_aircrafts_and_template(cls, airline_id: int):
         async with async_session_maker() as session:
             query = select(cls.model).options(
-                joinedload(cls.model.aircrafts).joinedload(Aircraft.aircraft_type)
+                joinedload(cls.model.template),
+            joinedload(cls.model.aircrafts).joinedload(Aircraft.aircraft_type),
+                with_loader_criteria(TaskTemplate, TaskTemplate.active.is_(True), include_aliases=True)
+
             ).filter_by(id=airline_id)
 
             result = await session.execute(query)
@@ -74,9 +77,11 @@ class AircraftCRUD(BaseCRUD):
     @classmethod
     async def add(cls, registration_no, airline_id, aircraft_type_id):
         airline = await AirlineCRUD.find_one_or_none_by_id(airline_id)
+        if not airline:
+            raise HTTPException(status_code=404, detail="Airline not found")
         aircraft_type = await AircraftTypeCRUD.find_one_or_none_by_id(aircraft_type_id)
-        if not airline or aircraft_type:
-            raise HTTPException(status_code=404, detail="Airline or aircraft type not found")
+        if not aircraft_type:
+            raise HTTPException(status_code=404, detail="Aircraft type not found")
         async with async_session_maker() as session:
             async with session.begin():
                 new_instance = cls.model(registration_no=registration_no, airline_id=airline_id, aircraft_type_id=aircraft_type_id)

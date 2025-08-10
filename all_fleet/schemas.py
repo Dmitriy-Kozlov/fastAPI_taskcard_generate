@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from airbus_data.schemas import TemplateFileRead
 
 
 class AirlineBase(BaseModel):
@@ -45,12 +46,18 @@ class AircraftRead(AircraftBase):
 
 
 class AircraftCreate(AircraftBase):
-    pass
+    airline_id: int
+    aircraft_type_id: int
 
 
 class AircraftWithType(AircraftBase):
     aircraft_type: AircraftTypeBase
 
 
-class AirlineWithAircrafts(AirlineBase):
+# class AirlineWithAircrafts(AirlineBase):
+#     aircrafts: list[AircraftWithType]
+
+
+class AirlineWithAircraftsAndTemplate(AirlineBase):
     aircrafts: list[AircraftWithType]
+    template: TemplateFileRead | None

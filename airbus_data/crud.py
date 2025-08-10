@@ -1,0 +1,132 @@
+import shutil
+import os
+import glob
+from sqlalchemy import delete
+from fastapi import HTTPException
+from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound
+from sqlalchemy.future import select
+from starlette.responses import FileResponse
+
+from database import async_session_maker
+from airbus_data.models import AirbusFile, TaskTemplate
+from base.crud import BaseCRUD
+from airbus_data.schemas import AirbusFileCreate, TemplateFileCreate
+
+
+class AirbusFileCRUD(BaseCRUD):
+    model = AirbusFile
+
+    # @classmethod
+    # async def find_presentation_by_filter(cls, **filter):
+    #     async with async_session_maker() as session:
+    #         filters = dict(**{k:v for k, v in filter.items() if v is not None})
+    #         title = filters.pop("title", None)
+    #         query = select(cls.model).filter_by(**filters)
+    #         if title is not None:
+    #             query = query.filter(Presentation.title.ilike(f"%{title}%"))
+    #         result = await session.execute(query)
+    #         plain_result = result.scalars().all()
+    #         return plain_result
+
+    @classmethod
+    async def add(cls, document_type, aircraft_type_id, revision_no, file):
+        async with async_session_maker() as session:
+            async with session.begin():
+                try:
+                    airbus_file_data = AirbusFileCreate(document_type=document_type, aircraft_type_id=aircraft_type_id, revision_no=revision_no)
+                except ValidationError as e:
+                    raise HTTPException(status_code=400, detail=e.errors())
+                file_extension = file.filename.split(".")[-1]
+                new_instance = cls.model(document_type=document_type, aircraft_type_id=aircraft_type_id, revision_no=revision_no, extension=file_extension)
+                session.add(new_instance)
+                await session.flush()
+                os.makedirs(f"files/airbus_files", exist_ok=True)
+                with open(f"files/airbus_files/{new_instance.id}.{file_extension}", "wb") as buffer:
+                    shutil.copyfileobj(file.file, buffer)
+                try:
+                    await session.commit()
+                except SQLAlchemyError as e:
+                    await session.rollback()
+                    raise e
+                return new_instance
+
+    # @classmethod
+    # async def download(cls, presentation_id: int):
+    #     async with async_session_maker() as session:
+    #         async with session.begin():
+    #             try:
+    #                 query = select(Presentation).filter_by(id=presentation_id)
+    #                 result = await session.execute(query)
+    #                 presentation = result.scalars().one()
+    #                 filename = f"{presentation.id}.{presentation.extension}"
+    #                 path = f"media/presentations/{filename}"
+    #                 return FileResponse(path, media_type='application/octet-stream',
+    #                                     filename=f"{presentation.owner}-{presentation.year}-{presentation.month}.{presentation.extension}")
+    #             except NoResultFound:
+    #                 raise HTTPException(status_code=404, detail="Presentation not found")
+
+    @classmethod
+    async def delete(cls, airbus_file_id: int):
+        async with async_session_maker() as session:
+            async with session.begin():
+                query = delete(cls.model).filter(cls.model.id == airbus_file_id)
+                await session.execute(query)
+                await session.commit()
+                file_pattern = f"files/airbus_files/{airbus_file_id}.*"
+                files_to_delete = glob.glob(file_pattern)
+                if not files_to_delete:
+                    raise FileNotFoundError(f"No files found for Airbus file ID {airbus_file_id}")
+                for file_path in files_to_delete:
+                    os.remove(file_path)
+                return {"message": "obj deleted"}
+
+
+class TemplateFileCRUD(BaseCRUD):
+    model = TaskTemplate
+
+    @classmethod
+    async def add(cls, airline_id, title, file):
+        async with async_session_maker() as session:
+            async with session.begin():
+                try:
+                    template_file_data = TemplateFileCreate(airline_id=airline_id, title=title)
+                except ValidationError as e:
+                    raise HTTPException(status_code=400, detail=e.errors())
+                file_extension = file.filename.split(".")[-1]
+                new_instance = cls.model(airline_id=airline_id, title=title, extension=file_extension)
+                session.add(new_instance)
+                await session.flush()
+                os.makedirs(f"files/templates/", exist_ok=True)
+                with open(f"files/templates/{new_instance.id}.{file_extension}", "wb") as buffer:
+                    shutil.copyfileobj(file.file, buffer)
+                try:
+                    await session.commit()
+                except SQLAlchemyError as e:
+                    await session.rollback()
+                    raise e
+                return new_instance
+
+    @classmethod
+    async def delete(cls, template_file_id: int):
+        async with async_session_maker() as session:
+            async with session.begin():
+                query = delete(cls.model).filter(cls.model.id == template_file_id)
+                await session.execute(query)
+                await session.commit()
+                file_pattern = f"files/templates/{template_file_id}.*"
+                files_to_delete = glob.glob(file_pattern)
+                if not files_to_delete:
+                    raise FileNotFoundError(f"No files found for Template file ID {template_file_id}")
+                for file_path in files_to_delete:
+                    os.remove(file_path)
+                return {"message": "obj deleted"}
+
+    @classmethod
+    async def get_template_for_airline(cls, airline_id: int):
+        async with async_session_maker() as session:
+            async with session.begin():
+                query = select(cls.model).filter_by(airline_id=airline_id, active=True)
+                result = await session.execute(query)
+                plain_result = result.scalar_one_or_none()
+                return plain_result

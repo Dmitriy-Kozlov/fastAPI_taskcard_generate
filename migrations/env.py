@@ -5,6 +5,7 @@ from sqlalchemy import pool
 
 from users.models import User
 from all_fleet.models import Airline, AircraftType, Aircraft
+from airbus_data.models import AirbusFile, TaskTemplate
 from database import Base
 
 from alembic import context

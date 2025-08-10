@@ -4,7 +4,7 @@ from fastapi import Depends, APIRouter, Body
 from pydantic import Field
 
 from all_fleet.crud import AirlineCRUD, AircraftTypeCRUD, AircraftCRUD
-from all_fleet.schemas import AirlineRead, AirlineCreate, AircraftTypeRead, AircraftTypeCreate, AircraftRead, AircraftCreate, AirlineWithAircrafts
+from all_fleet.schemas import AirlineRead, AirlineCreate, AircraftTypeRead, AircraftTypeCreate, AircraftRead, AircraftCreate, AirlineWithAircraftsAndTemplate
 
 
 router = APIRouter(
@@ -32,10 +32,12 @@ async def get_all_airlines():
 #     result = await AirlineCRUD.find_one_or_none_by_id(id)
 #     return result
 
-@router.get("/airlines/{airline_id}", response_model=AirlineWithAircrafts)
+@router.get("/airlines/{airline_id}",
+            response_model=AirlineWithAircraftsAndTemplate
+            )
 # @router.get("/airlines/{airline_id}")
-async def get_airline_with_aircrafts(airline_id: int):
-    airline = await AirlineCRUD.find_airline_with_aircrafts(airline_id)
+async def find_airline_with_aircrafts_and_template(airline_id: int):
+    airline = await AirlineCRUD.find_airline_with_aircrafts_and_template(airline_id)
     return airline
 
 

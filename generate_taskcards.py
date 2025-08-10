@@ -577,6 +577,101 @@ def generate_taskcards(aircraft_type, aircraft, mpd_tasks_list, airline_template
 
     return mpd_lost, mpd_create, files
 
+
+def generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id):
+    with open(f"{atype}_merged_result.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    template_path = f"files/templates/{template_id}.docx"
+    output_dir = f"{atype}_generated_docs"
+    os.makedirs(output_dir, exist_ok=True)
+    mpd_lost = []
+    mpd_create = []
+    files = []
+
+    def replace_in_header_footer(doc, replacements):
+        # Обработка всех колонтитулов (верхний и нижний)
+        for section in doc.sections:
+            # Верхний колонтитул
+            header = section.header
+            for paragraph in header.paragraphs:
+                for key, val in replacements.items():
+                    if f"{{{{{key}}}}}" in paragraph.text:
+                        paragraph.text = paragraph.text.replace(f"{{{{{key}}}}}", val)
+            # Нижний колонтитул
+            footer = section.footer
+            for paragraph in footer.paragraphs:
+                for key, val in replacements.items():
+                    if f"{{{{{key}}}}}" in paragraph.text:
+                        paragraph.text = paragraph.text.replace(f"{{{{{key}}}}}", val)
+
+    for mpd_key in mpd_tasks_list:
+        try:
+            content = data[mpd_key]
+        except KeyError:
+            mpd_lost.append(mpd_key)
+            continue
+        mpd_create.append(mpd_key)
+        doc = Document(template_path)
+        from docxtpl import DocxTemplate
+
+        # tpl = DocxTemplate(f"{aircraft_type}_template.docx")
+        # tpl = DocxTemplate("template.docx")
+        tpl = DocxTemplate(f"files/templates/{template_id}.docx")
+        tools = content.get("STANDARDTOOL_KEYWORD", [])
+        tools.extend(content.get("TOOLIDENTIFIER_KEYWORD", []))
+        # id_tools = content.get("TOOLIDENTIFIER_KEYWORD", [])
+        materials = content.get("MATERIALCODE_KEYWORD", [])
+
+        # Базовые замены
+        replacements = {
+            "mpd_key": mpd_key,
+            "preparation": content.get("preparation", ""),
+            "zone": content.get("zone", ""),
+            "skill_code": content.get("skill_code", ""),
+            "interval": content.get("interval", ""),
+            "manhour": content.get("manhour", ""),
+            "task_number": content.get("task_number", ""),
+            "description": content.get("description", ""),
+            "tools": tools,
+            "materials": materials,
+            "acreg":  aircraft,
+        }
+
+        # Динамические замены для STANDARDTOOL_KEYWORD
+        for i, tool in enumerate(tools, start=1):
+            replacements[f"STANDARDTOOL_KEYWORD_{i}"] = tool
+
+        tpl.render(replacements)
+        tpl.save(f"files/templates/{atype}_temp.docx")
+
+
+        # Открываем с python-docx, заменяем в колонтитулах и сохраняем
+        doc = Document(f"files/templates/{atype}_temp.docx")
+        replace_in_header_footer(doc, replacements)
+        output_docx = os.path.join(output_dir, f"{atype}_{mpd_key}.docx")
+        doc.save(output_docx)
+        files.append(output_docx)
+
+        filename_pdf = f"{atype}_{mpd_key}.pdf"
+        filepath_pdf = os.path.join(output_dir, filename_pdf)
+
+        try:
+            subprocess.run([
+                "libreoffice",
+                "--headless",
+                "--convert-to", "pdf",
+                "--outdir", output_dir,
+                output_docx
+            ], check=True)
+            files.append(filepath_pdf)
+        except subprocess.CalledProcessError as e:
+            print(f"PDF generation failed: {e}")
+            filepath_pdf = None
+
+    return mpd_lost, mpd_create, files
+
+
 #
 # collect_from_mpd(aircraft_type)
 # parse_IPC(aircraft_type)
