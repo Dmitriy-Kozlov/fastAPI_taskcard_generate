@@ -1,17 +1,18 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends
 from airbus_data.schemas import AirbusFileRead, AirbusFileCreate, DocumentType, TemplateFileRead, TemplateFileCreate
 from airbus_data.crud import AirbusFileCRUD, TemplateFileCRUD
-from users.router import get_current_active_user
+from users.router import get_current_active_user, get_current_active_admin
 
 router = APIRouter(
     prefix="/airbus_files",
-    tags=["airbus_files"]
+    tags=["airbus_files"],
+    dependencies=[Depends(get_current_active_user)],
 )
 
 
 @router.post("/add", response_model=AirbusFileRead)
 async def add_airbus_file(
-        # user=Depends(get_current_active_user),
+        user=Depends(get_current_active_admin),
         document_type: DocumentType = Form(...),
         aircraft_type_id: int = Form(...),
         revision_no: int = Form(...),
@@ -53,7 +54,7 @@ async def get_all_airbus_files():
 @router.put("/edit", response_model=AirbusFileRead)
 async def edit_airbus_file_by_id(airbus_file: AirbusFileRead,
 # async def edit_airbus_file_by_id(id: int,
-                                   # user=Depends(get_current_active_user)
+                                   user=Depends(get_current_active_admin)
                                    ):
     result = await AirbusFileCRUD.edit(**airbus_file.dict())
     return result
@@ -61,7 +62,7 @@ async def edit_airbus_file_by_id(airbus_file: AirbusFileRead,
 
 @router.delete("/{id}/delete")
 async def delete_airbus_file_by_id(id: int,
-                                   # user=Depends(get_current_active_user)
+                                   user=Depends(get_current_active_admin)
                                    ):
     result = await AirbusFileCRUD.delete(id)
     return result
@@ -70,7 +71,7 @@ async def delete_airbus_file_by_id(id: int,
 
 @router.post("/templates/add", response_model=TemplateFileRead)
 async def add_template(
-        # user=Depends(get_current_active_user),
+        user=Depends(get_current_active_admin),
         airline_id: int = Form(...),
         title: str = Form(...),
         file: UploadFile = File(...)
@@ -89,7 +90,7 @@ async def get_all_templates():
 
 @router.put("/templates/edit", response_model=TemplateFileRead)
 async def edit_template_file_by_id(template_file: TemplateFileRead,
-                                   # user=Depends(get_current_active_user)
+                                   user=Depends(get_current_active_admin)
                                    ):
     result = await TemplateFileCRUD.edit(**template_file.dict())
     return result
@@ -97,7 +98,7 @@ async def edit_template_file_by_id(template_file: TemplateFileRead,
 
 @router.delete("/templates/{id}/delete")
 async def delete_template_by_id(id: int,
-                                   # user=Depends(get_current_active_user)
+                                   user=Depends(get_current_active_admin)
                                    ):
     result = await TemplateFileCRUD.delete(id)
     return result

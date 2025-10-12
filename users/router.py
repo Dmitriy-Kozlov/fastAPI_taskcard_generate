@@ -1,9 +1,9 @@
 from typing import Annotated
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import Depends, APIRouter, Body
+from fastapi import Depends, APIRouter, Body, HTTPException
 from pydantic import Field
 
-from users.crud import get_current_active_user
+from users.crud import get_current_active_user, get_current_active_admin
 from users.schemas import UserRead, UserCreate, Token
 from users.crud import UserCRUD
 
@@ -48,7 +48,7 @@ async def get_all_users(user=Depends(get_current_active_user)):
 
 
 @router.put("/edit", response_model=UserRead)
-async def edit_user(user_edit: UserRead, user=Depends(get_current_active_user)):
+async def edit_user(user_edit: UserRead, user=Depends(get_current_active_admin)):
     result = await UserCRUD.edit(**user_edit.dict())
     return result
 
@@ -56,10 +56,12 @@ async def edit_user(user_edit: UserRead, user=Depends(get_current_active_user)):
 @router.get("/{id}", response_model=UserRead)
 async def get_user_by_id(id: int, user=Depends(get_current_active_user)):
     result = await UserCRUD.find_one_or_none_by_id(id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="User not found")
     return result
 
 
 @router.delete("/{id}/delete")
-async def delete_user_by_id(id: int, user=Depends(get_current_active_user)):
+async def delete_user_by_id(id: int, user=Depends(get_current_active_admin)):
     result = await UserCRUD.delete(id)
     return result
