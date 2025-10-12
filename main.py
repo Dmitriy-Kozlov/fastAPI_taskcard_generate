@@ -1,10 +1,12 @@
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
 
 from schemas import AircraftIn, AircraftInNew
+from airbus_data.schemas import AirbusFileRead
 import os
 
 from generate_taskcards import generate_taskcards, generate_taskcards_new
@@ -12,12 +14,20 @@ from fleet import all_airlines
 from utils import zip_files
 from init_superuser import init_superuser
 from all_fleet.crud import AirlineCRUD
-from airbus_data.crud import TemplateFileCRUD
+from airbus_data.crud import AirbusFileCRUD
 from users.router import router as user_router
 from all_fleet.router import router as fleet_router
 from airbus_data.router import router as airbus_data_router
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("App starting...")
+    await init_superuser()
+    print("Superuser initialized.")
+    yield
+    print("App shutting down...")
+
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(user_router)
 app.include_router(fleet_router)
@@ -102,10 +112,15 @@ async def generate(data: AircraftIn):
     return response
 
 
-
 @app.get("/download/{filename}")
 def download_file(filename: str):
     zip_path = os.path.join("generated", filename)
     if not os.path.exists(zip_path):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(path=zip_path, filename="Taskcards.zip", media_type="application/zip")
+
+
+@app.post("/remake_files", response_model=list[AirbusFileRead])
+async def remake_files_after_upload(atype: int):
+    result = await AirbusFileCRUD.get_amm_ipc_mpd_files(atype)
+    return result

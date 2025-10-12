@@ -1,4 +1,3 @@
-from enum import Enum
 import json
 from openpyxl import load_workbook
 import re
@@ -7,60 +6,14 @@ import os
 from docx import Document
 import subprocess
 
-from service import SOURCE_PATH
-#
-# class AircraftRegistration(Enum):
-#     UK32120 = "UK32120"
-#     UK32121 = "UK32121"
-#     UK33001 = "UK33001"
-#
-#
-class AircraftType(Enum):
-    A330 = "A330"
-    A321 = "A321"
-#
-#
-# aircrafts = {
-#     "UK32120": {
-#     "type": "A321",
-#     "subtype": "C"
-# },
-#     "UK32121": {
-#     "type": "A321",
-#     "subtype": "N"
-# },
-#     "UK33001": {
-#     "type": "A330",
-#     "subtype": ""
-# }}
-#
-#
-# aircraft = AircraftRegistration.UK33001.value
-# aircraft_type = aircrafts[aircraft]["type"]
-# subtype = aircrafts[aircraft]["subtype"]
-
-#
-# mpd_tasks_list = [
-#     "256200-08-1",
-#     "243851-01-1",
-#     "262400-11-1",
-#     "262400-01-1",
-#     "351200-25-1",
-#     "262400-01-1",
-#     "262400-11-1",
-#     "274000-04-1",
-#     "291100-06-1",
-#     "351141-01-1",
-#     "351200-06-1",
-#     "353200-07-1",
-#     "353200-07-1"
-# ]
+SOURCE_PATH = "files/source"
 
 
-def collect_from_mpd(aircraft_type):
+def collect_from_mpd(mpd_file, atype):
     # Загрузить Excel-файл
-    workbook = load_workbook(f"{aircraft_type}_MPD.xlsx", data_only=True)
+    workbook = load_workbook(mpd_file, data_only=True)
     sheet = workbook["MPD"]
+    os.makedirs(f"{SOURCE_PATH}", exist_ok=True)
 
     results = {}
 
@@ -86,10 +39,10 @@ def collect_from_mpd(aircraft_type):
         except:
             cleaned_interval = ""
         manhours_rows = []
-        if aircraft_type == AircraftType.A330.value:
+        if atype == "A330":
             reference = row[26].value   # колонка AA
             manhours_rows = [28, 29, 30] # Колонки AC, AD, AE — индексы 28, 29, 30
-        if aircraft_type == AircraftType.A321.value:
+        if atype == "A321":
             reference = row[18].value   # колонка S
             manhours_rows = [20, 21, 22] # Колонки U, V, W — индексы 20, 21, 22
 
@@ -124,15 +77,15 @@ def collect_from_mpd(aircraft_type):
         }
 
     # Сохранить результат в JSON-файл
-    with open(f"{aircraft_type}_mpd_data.json", "w", encoding="utf-8") as f:
+    with open(f"{SOURCE_PATH}/{atype}_mpd_data.json", "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
 
-def parse_IPC(aircraft_type):
+def parse_IPC(ipc_file, atype):
 
     ipc_results = {}
 
-    with open(f"{aircraft_type}_IPC.json", "r", encoding="utf-8") as f:
+    with open(ipc_file, "r", encoding="utf-8") as f:
         # with open("test_IPC.json", "r", encoding="utf-8") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
@@ -194,11 +147,11 @@ def parse_IPC(aircraft_type):
                 })
 
     # Сохраняем результат
-    with open(f"{aircraft_type}_parsed_IPC_results.json", "w", encoding="utf-8") as out_file:
+    with open(f"{SOURCE_PATH}/{atype}_parsed_IPC_results.json", "w", encoding="utf-8") as out_file:
         json.dump(ipc_results, out_file, indent=2, ensure_ascii=False)
 
 
-def parse_tool_material_from_AMM(aircraft_type):
+def parse_tool_material_from_AMM(amm_file, atype):
 
     def parse_tools_and_materials(text, tool_list, id_tool_list, material_list):
         tools = []
@@ -340,7 +293,7 @@ def parse_tool_material_from_AMM(aircraft_type):
                 expendable_refs = [{"designation": designation, "ipc_number": ipc, "item": item} for
                                    designation, ipc, item in pattern]
 
-                with open(f"{aircraft_type}_parsed_IPC_results.json", "r", encoding="utf-8") as f:
+                with open(f"{SOURCE_PATH}/{atype}_parsed_IPC_results.json", "r", encoding="utf-8") as f:
                     ipc_data = json.load(f)
 
                 # Поиск part_number и qty
@@ -363,7 +316,7 @@ def parse_tool_material_from_AMM(aircraft_type):
 
     results_by_mpd = {}
 
-    with open(f"{aircraft_type}_AMM.json", "r", encoding="utf-8") as f:
+    with open(amm_file, "r", encoding="utf-8") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             if not line:
@@ -443,18 +396,18 @@ def parse_tool_material_from_AMM(aircraft_type):
             }
 
     # Сохраняем результат
-    with open(f"{aircraft_type}_parsed_results_from_AMM.json", "w", encoding="utf-8") as out_file:
+    with open(f"{SOURCE_PATH}/{atype}_parsed_results_from_AMM.json", "w", encoding="utf-8") as out_file:
         json.dump(results_by_mpd, out_file, indent=2, ensure_ascii=False)
 
 
-def merge_AMM_MPD(aircraft_type):
+def merge_AMM_MPD(atype):
 
     # Загрузка первого JSON-файла (куда нужно добавить данные)
-    with open(f"{aircraft_type}_mpd_data.json", "r", encoding="utf-8") as f:
+    with open(f"{SOURCE_PATH}/{atype}_mpd_data.json", "r", encoding="utf-8") as f:
         mpd_data = json.load(f)
 
     # Загрузка второго JSON-файла (откуда берутся tools/materials)
-    with open(f"{aircraft_type}_parsed_results_from_AMM.json", "r", encoding="utf-8") as f:
+    with open(f"{SOURCE_PATH}/{atype}_parsed_results_from_AMM.json", "r", encoding="utf-8") as f:
         tech_data = json.load(f)
 
     # Объединение данных на основе первых 6 символов названия задачи
@@ -478,204 +431,6 @@ def merge_AMM_MPD(aircraft_type):
                     mpd_content[key] = tech_info[key]
 
     # Сохранение результата в новый JSON-файл
-    with open(f"{aircraft_type}_merged_result.json", "w", encoding="utf-8") as f:
+    with open(f"{SOURCE_PATH}/{atype}_merged_result.json", "w", encoding="utf-8") as f:
         json.dump(mpd_data, f, indent=2, ensure_ascii=False)
 
-
-# def generate_taskcards(aircraft_type, subtype, aircraft, mpd_tasks_list, airline_template):
-def generate_taskcards(aircraft_type, aircraft, mpd_tasks_list, airline_template, subtype=""):
-    with open(f"{aircraft_type}_merged_result.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    # template_path = f"{aircraft_type}_template.docx"
-    # template_path = "template.docx"
-    template_path = f"{airline_template}.docx"
-    output_dir = f"{aircraft_type}{subtype}_generated_docs"
-    os.makedirs(output_dir, exist_ok=True)
-    mpd_lost = []
-    mpd_create = []
-    files = []
-
-    def replace_in_header_footer(doc, replacements):
-        # Обработка всех колонтитулов (верхний и нижний)
-        for section in doc.sections:
-            # Верхний колонтитул
-            header = section.header
-            for paragraph in header.paragraphs:
-                for key, val in replacements.items():
-                    if f"{{{{{key}}}}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace(f"{{{{{key}}}}}", val)
-            # Нижний колонтитул
-            footer = section.footer
-            for paragraph in footer.paragraphs:
-                for key, val in replacements.items():
-                    if f"{{{{{key}}}}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace(f"{{{{{key}}}}}", val)
-
-    for mpd_key in mpd_tasks_list:
-        try:
-            content = data[mpd_key]
-        except KeyError:
-            mpd_lost.append(mpd_key)
-            continue
-        mpd_create.append(mpd_key)
-        doc = Document(template_path)
-        from docxtpl import DocxTemplate
-
-        # tpl = DocxTemplate(f"{aircraft_type}_template.docx")
-        # tpl = DocxTemplate("template.docx")
-        tpl = DocxTemplate(f"{airline_template}.docx")
-        tools = content.get("STANDARDTOOL_KEYWORD", [])
-        tools.extend(content.get("TOOLIDENTIFIER_KEYWORD", []))
-        # id_tools = content.get("TOOLIDENTIFIER_KEYWORD", [])
-        materials = content.get("MATERIALCODE_KEYWORD", [])
-
-        # Базовые замены
-        replacements = {
-            "mpd_key": mpd_key,
-            "preparation": content.get("preparation", ""),
-            "zone": content.get("zone", ""),
-            "skill_code": content.get("skill_code", ""),
-            "interval": content.get("interval", ""),
-            "manhour": content.get("manhour", ""),
-            "task_number": content.get("task_number", ""),
-            "description": content.get("description", ""),
-            "tools": tools,
-            "materials": materials,
-            "acreg":  aircraft,
-        }
-
-        # Динамические замены для STANDARDTOOL_KEYWORD
-        for i, tool in enumerate(tools, start=1):
-            replacements[f"STANDARDTOOL_KEYWORD_{i}"] = tool
-
-        tpl.render(replacements)
-        tpl.save(f"{aircraft_type}_temp.docx")
-
-
-        # Открываем с python-docx, заменяем в колонтитулах и сохраняем
-        doc = Document(f"{aircraft_type}_temp.docx")
-        replace_in_header_footer(doc, replacements)
-        output_docx = os.path.join(output_dir, f"{aircraft_type}{subtype}_{mpd_key}.docx")
-        doc.save(output_docx)
-        files.append(output_docx)
-
-        filename_pdf = f"{aircraft_type}{subtype}_{mpd_key}.pdf"
-        filepath_pdf = os.path.join(output_dir, filename_pdf)
-
-        try:
-            subprocess.run([
-                "libreoffice",
-                "--headless",
-                "--convert-to", "pdf",
-                "--outdir", output_dir,
-                output_docx
-            ], check=True)
-            files.append(filepath_pdf)
-        except subprocess.CalledProcessError as e:
-            print(f"PDF generation failed: {e}")
-            filepath_pdf = None
-
-    return mpd_lost, mpd_create, files
-
-
-def generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id):
-    with open(f"{SOURCE_PATH}/{atype}_merged_result.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    template_path = f"files/templates/{template_id}.docx"
-    output_dir = f"{atype}_generated_docs"
-    os.makedirs(output_dir, exist_ok=True)
-    mpd_lost = []
-    mpd_create = []
-    files = []
-
-    def replace_in_header_footer(doc, replacements):
-        # Обработка всех колонтитулов (верхний и нижний)
-        for section in doc.sections:
-            # Верхний колонтитул
-            header = section.header
-            for paragraph in header.paragraphs:
-                for key, val in replacements.items():
-                    if f"{{{{{key}}}}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace(f"{{{{{key}}}}}", val)
-            # Нижний колонтитул
-            footer = section.footer
-            for paragraph in footer.paragraphs:
-                for key, val in replacements.items():
-                    if f"{{{{{key}}}}}" in paragraph.text:
-                        paragraph.text = paragraph.text.replace(f"{{{{{key}}}}}", val)
-
-    for mpd_key in mpd_tasks_list:
-        try:
-            content = data[mpd_key]
-        except KeyError:
-            mpd_lost.append(mpd_key)
-            continue
-        mpd_create.append(mpd_key)
-        doc = Document(template_path)
-        from docxtpl import DocxTemplate
-
-        # tpl = DocxTemplate(f"{aircraft_type}_template.docx")
-        # tpl = DocxTemplate("template.docx")
-        tpl = DocxTemplate(f"files/templates/{template_id}.docx")
-        tools = content.get("STANDARDTOOL_KEYWORD", [])
-        tools.extend(content.get("TOOLIDENTIFIER_KEYWORD", []))
-        # id_tools = content.get("TOOLIDENTIFIER_KEYWORD", [])
-        materials = content.get("MATERIALCODE_KEYWORD", [])
-
-        # Базовые замены
-        replacements = {
-            "mpd_key": mpd_key,
-            "preparation": content.get("preparation", ""),
-            "zone": content.get("zone", ""),
-            "skill_code": content.get("skill_code", ""),
-            "interval": content.get("interval", ""),
-            "manhour": content.get("manhour", ""),
-            "task_number": content.get("task_number", ""),
-            "description": content.get("description", ""),
-            "tools": tools,
-            "materials": materials,
-            "acreg":  aircraft,
-        }
-
-        # Динамические замены для STANDARDTOOL_KEYWORD
-        for i, tool in enumerate(tools, start=1):
-            replacements[f"STANDARDTOOL_KEYWORD_{i}"] = tool
-
-        tpl.render(replacements)
-        tpl.save(f"files/templates/{atype}_temp.docx")
-
-
-        # Открываем с python-docx, заменяем в колонтитулах и сохраняем
-        doc = Document(f"files/templates/{atype}_temp.docx")
-        replace_in_header_footer(doc, replacements)
-        output_docx = os.path.join(output_dir, f"{atype}_{mpd_key}.docx")
-        doc.save(output_docx)
-        files.append(output_docx)
-
-        filename_pdf = f"{atype}_{mpd_key}.pdf"
-        filepath_pdf = os.path.join(output_dir, filename_pdf)
-
-        try:
-            subprocess.run([
-                "libreoffice",
-                "--headless",
-                "--convert-to", "pdf",
-                "--outdir", output_dir,
-                output_docx
-            ], check=True)
-            files.append(filepath_pdf)
-        except subprocess.CalledProcessError as e:
-            print(f"PDF generation failed: {e}")
-            filepath_pdf = None
-
-    return mpd_lost, mpd_create, files
-
-
-#
-# collect_from_mpd(aircraft_type)
-# parse_IPC(aircraft_type)
-# parse_tool_material_from_AMM(aircraft_type)
-# merge_AMM_MPD(aircraft_type)
-# generate_taskcards(aircraft_type, subtype, aircraft)

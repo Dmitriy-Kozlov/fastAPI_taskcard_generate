@@ -8,11 +8,14 @@ from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.future import select
 from starlette.responses import FileResponse
 
+from service import collect_from_mpd, parse_IPC, parse_tool_material_from_AMM, merge_AMM_MPD
 from database import async_session_maker
 from airbus_data.models import AirbusFile, TaskTemplate
+from all_fleet.models import AircraftType
 from base.crud import BaseCRUD
 from airbus_data.schemas import AirbusFileCreate, TemplateFileCreate
 
+FILES_PATH = "files/airbus_files"
 
 class AirbusFileCRUD(BaseCRUD):
     model = AirbusFile
@@ -41,8 +44,8 @@ class AirbusFileCRUD(BaseCRUD):
                 new_instance = cls.model(document_type=document_type, aircraft_type_id=aircraft_type_id, revision_no=revision_no, extension=file_extension)
                 session.add(new_instance)
                 await session.flush()
-                os.makedirs(f"files/airbus_files", exist_ok=True)
-                with open(f"files/airbus_files/{new_instance.id}.{file_extension}", "wb") as buffer:
+                os.makedirs(FILES_PATH, exist_ok=True)
+                with open(f"{FILES_PATH}/{new_instance.id}.{file_extension}", "wb") as buffer:
                     shutil.copyfileobj(file.file, buffer)
                 try:
                     await session.commit()
@@ -80,6 +83,34 @@ class AirbusFileCRUD(BaseCRUD):
                 for file_path in files_to_delete:
                     os.remove(file_path)
                 return {"message": "obj deleted"}
+
+
+    @classmethod
+    async def get_amm_ipc_mpd_files(cls, atype_id: int):
+        async with async_session_maker() as session:
+            async with session.begin():
+                query = select(cls.model).filter_by(aircraft_type_id=atype_id, active=True)
+                result = await session.execute(query)
+                plain_result = result.scalars().all()
+                query = select(AircraftType).filter_by(id=atype_id)
+                result = await session.execute(query)
+                type_result = result.scalar_one_or_none()
+
+            # Разбор полученных файлов
+        mpd_id = next((obj.id for obj in plain_result if obj.document_type == "MPD"), None)
+        amm_id = next((obj.id for obj in plain_result if obj.document_type == "AMM"), None)
+        ipc_id = next((obj.id for obj in plain_result if obj.document_type == "IPC"), None)
+        mpd_file = f"{FILES_PATH}/{mpd_id}.xlsx"
+        ipc_file = f"{FILES_PATH}/{ipc_id}.json"
+        amm_file = f"{FILES_PATH}/{amm_id}.json"
+        atype = type_result.aircraft_type
+        if not mpd_id or not ipc_id or not amm_id:
+            raise HTTPException(status_code=400, detail={"Not found": f"{mpd_id=}, {ipc_id=}, {amm_id=}"})
+        collect_from_mpd(mpd_file, atype)
+        parse_IPC(ipc_file, atype)
+        parse_tool_material_from_AMM(amm_file, atype)
+        merge_AMM_MPD(atype)
+        return plain_result
 
 
 class TemplateFileCRUD(BaseCRUD):
