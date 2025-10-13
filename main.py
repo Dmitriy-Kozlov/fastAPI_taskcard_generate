@@ -11,6 +11,7 @@ import os
 
 from generate_taskcards import generate_taskcards, generate_taskcards_new
 from fleet import all_airlines
+from users.schemas import UserCreate
 from utils import zip_files
 from init_superuser import init_superuser
 from all_fleet.crud import AirlineCRUD
@@ -18,6 +19,7 @@ from airbus_data.crud import AirbusFileCRUD
 from users.router import router as user_router
 from all_fleet.router import router as fleet_router
 from airbus_data.router import router as airbus_data_router
+from users.crud import get_current_active_user, get_current_active_admin
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,15 +36,15 @@ app.include_router(fleet_router)
 app.include_router(airbus_data_router)
 
 
-@app.on_event("startup")
-async def startup_event():
-    await init_superuser()
+# @app.on_event("startup")
+# async def startup_event():
+#     await init_superuser()
 
 
 # Dependency to get DB session
 
 @app.post("/generate-taskcards_new")
-async def generate(data: AircraftInNew):
+async def generate(data: AircraftInNew, user = Depends(get_current_active_user)):
     mpd_tasks_list = data.taskcards
     aircraft = data.registration
     current_airline_id = data.airline
@@ -73,7 +75,7 @@ async def generate(data: AircraftInNew):
     return response
 
 @app.post("/generate-taskcards")
-async def generate(data: AircraftIn):
+async def generate(data: AircraftIn,  user = Depends(get_current_active_user)):
     mpd_tasks_list = data.taskcards
     aircraft = data.registration
     current_airline = data.airline
@@ -113,7 +115,7 @@ async def generate(data: AircraftIn):
 
 
 @app.get("/download/{filename}")
-def download_file(filename: str):
+def download_file(filename: str,  user = Depends(get_current_active_user)):
     zip_path = os.path.join("generated", filename)
     if not os.path.exists(zip_path):
         raise HTTPException(status_code=404, detail="File not found")
@@ -121,6 +123,6 @@ def download_file(filename: str):
 
 
 @app.post("/remake_files", response_model=list[AirbusFileRead])
-async def remake_files_after_upload(atype: int):
+async def remake_files_after_upload(atype: int,  user = Depends(get_current_active_admin)):
     result = await AirbusFileCRUD.get_amm_ipc_mpd_files(atype)
     return result
