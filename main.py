@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
+from starlette.staticfiles import StaticFiles
 
 from schemas import AircraftIn, AircraftInNew
 from airbus_data.schemas import AirbusFileRead
@@ -20,6 +21,7 @@ from users.router import router as user_router
 from all_fleet.router import router as fleet_router
 from airbus_data.router import router as airbus_data_router
 from users.crud import get_current_active_user, get_current_active_admin
+from pages.router import router as pages_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,6 +36,9 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(user_router)
 app.include_router(fleet_router)
 app.include_router(airbus_data_router)
+app.include_router(pages_router)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 # @app.on_event("startup")

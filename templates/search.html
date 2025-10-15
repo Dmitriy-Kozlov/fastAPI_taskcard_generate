@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}
+Search Presentations
+{% endblock %}
+{% block nav_title %}Presentations Library{% endblock %}
+{% block content %}
+
+    <div class="container">
+        <div class="search-container">
+            <h2>Search Presentations</h2>
+            <form id="searchForm">
+                <div class="filters">
+                    <div class="form-group">
+                        <label for="owner">Owner</label>
+                        <input type="text" id="owner" name="owner" placeholder="Enter owner name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" placeholder="Enter film title">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="month">Month</label>
+                        <select id="month" name="month">
+                            <option value="">Select month</option>
+                            <option value="Январь">Январь</option>
+                            <option value="Февраль">Февраль</option>
+                            <option value="Март">Март</option>
+                            <option value="Апрель">Апрель</option>
+                            <option value="Май">Май</option>
+                            <option value="Июнь">Июнь</option>
+                            <option value="Июль">Июль</option>
+                            <option value="Август">Август</option>
+                            <option value="Сентябрь">Сентябрь</option>
+                            <option value="Октябрь">Октябрь</option>
+                            <option value="Ноябрь">Ноябрь</option>
+                            <option value="Декабрь">Декабрь</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <select id="year" name="year">
+                            <option value="">Select year</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit">Search</button>
+            </form>
+        </div>
+
+        <div class="loading">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <div id="results" class="results">
+            <!-- Results will be dynamically inserted here -->
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+<script src="/static/js/search.js"></script>
+{% endblock %}

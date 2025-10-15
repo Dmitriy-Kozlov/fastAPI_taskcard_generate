@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}
+Add Presentations
+{% endblock %}
+{% block nav_title %}Add New Presentation{% endblock %}
+{% block content %}
+
+
+    <div class="container">
+
+        <div class="form-container">
+            <h2>Add Presentation</h2>
+            <form id="addFilmForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" id="title" name="title" required placeholder="Enter presentation title">
+                </div>
+
+                <div class="form-group">
+                    <label for="owner">Owner</label>
+                    <input type="text" id="owner" name="owner" required placeholder="Enter owner name">
+                </div>
+
+                <div class="form-group">
+                    <label for="year">Year</label>
+                    <select id="year" name="year" required>
+                        <option value="">Select year</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="month">Month</label>
+                    <select id="month" name="month">
+                            <option value="">Select month</option>
+                            <option value="Январь">Январь</option>
+                            <option value="Февраль">Февраль</option>
+                            <option value="Март">Март</option>
+                            <option value="Апрель">Апрель</option>
+                            <option value="Май">Май</option>
+                            <option value="Июнь">Июнь</option>
+                            <option value="Июль">Июль</option>
+                            <option value="Август">Август</option>
+                            <option value="Сентябрь">Сентябрь</option>
+                            <option value="Октябрь">Октябрь</option>
+                            <option value="Ноябрь">Ноябрь</option>
+                            <option value="Декабрь">Декабрь</option>
+                        </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="file">Presentation File</label>
+                    <input type="file" id="file" name="file" required accept="*">
+                </div>
+
+                <button type="submit">Upload Presentation</button>
+            </form>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+<script src="/static/js/add.js"></script>
+{% endblock %}

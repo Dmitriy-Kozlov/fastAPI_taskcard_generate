@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}
+Users List
+{% endblock %}
+{% block nav_title %}Users Management{% endblock %}
+{% block content %}
+
+  <div class="container">
+        <div class="table-container">
+            <h2>Users List</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Full Name</th>
+                        <th>Status</th>
+                        <th>Admin</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <!-- Table content will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit User</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="editUserForm">
+                <input type="hidden" id="userId">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" required>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="disabled">
+                    <label for="disabled">Disabled</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="is_admin">
+                    <label for="is_admin">Admin</label>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block script %}
+<script src="/static/js/users.js"></script>
+{% endblock %}
