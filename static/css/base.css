@@ -465,7 +465,7 @@ tr:hover {
 }
 
 
-.form-container {
+.form-container, .list-container {
     background: #ffffff;
     border-radius: 15px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.1);
@@ -549,4 +549,9 @@ button[type="submit"]:hover {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
     margin-bottom: 20px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

@@ -25,3 +25,8 @@ async def get_add_html(request: Request):
 @router.get('/users')
 async def get_users_html(request: Request):
     return templates.TemplateResponse(name='users.html', context={'request': request})
+
+
+@router.get('/airlines')
+async def get_airlines_html(request: Request):
+    return templates.TemplateResponse(name='airlines.html', context={'request': request})

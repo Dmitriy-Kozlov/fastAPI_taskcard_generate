@@ -22,9 +22,10 @@ router = APIRouter(
 #     return [AirlineRead.from_orm(airline) for airline in airlines]
 
 @router.get("/airlines/all")
-# async def get_all_users(user=Depends(get_current_active_user)):
-async def get_all_airlines():
-    airlines = await AirlineCRUD.get_all_airlines_dict()
+async def get_all_users(user=Depends(get_current_active_user)):
+# async def get_all_airlines():
+#     airlines = await AirlineCRUD.get_all_airlines_dict()
+    airlines = await AirlineCRUD.find_all()
     return airlines
 
 

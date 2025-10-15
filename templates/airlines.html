@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}
+Airlines Management
+{% endblock %}
+{% block nav_title %}Airlines Management{% endblock %}
+{% block content %}
+
+
+<!--        <div class="form-container">-->
+<!--            <h2>Add New Airline</h2>-->
+<!--            <form id="airlineForm">-->
+<!--                <input type="text" id="airlineName" placeholder="Airline name" required>-->
+<!--                <button type="submit">Add Airline</button>-->
+<!--            </form>-->
+<!--        </div>-->
+
+    <div class="container">
+        <div class="container">
+        <div class="table-container">
+            <h2>Airlines</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Airline</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="airlinesTableBody">
+                    <!-- Table content will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    </div>
+    <div id="popup" class="popup"></div>
+{% endblock %}
+
+{% block script %}
+<script src="/static/js/airlines.js"></script>
+{% endblock %}

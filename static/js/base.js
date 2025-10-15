@@ -5,17 +5,20 @@ function checkAuthStatus() {
     const logoutBtn = document.getElementById('logoutBtn');
     const addBtn = document.getElementById('addBtn');
     const usersBtn = document.getElementById('usersBtn');
+    const airlinesBtn = document.getElementById('airlinesBtn');
 
     if (authToken) {
         loginBtn.classList.add('hidden');
         logoutBtn.classList.remove('hidden');
         addBtn.classList.remove('hidden');
         usersBtn.classList.remove('hidden');
+        airlinesBtn.classList.remove('hidden');
     } else {
         loginBtn.classList.remove('hidden');
         logoutBtn.classList.add('hidden');
         addBtn.classList.add('hidden');
         usersBtn.classList.add('hidden');
+        airlinesBtn.classList.add('hidden');
     }
 }
 
