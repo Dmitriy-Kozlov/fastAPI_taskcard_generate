@@ -7,15 +7,16 @@ Airlines Management
 {% block content %}
 
 
-<!--        <div class="form-container">-->
-<!--            <h2>Add New Airline</h2>-->
-<!--            <form id="airlineForm">-->
-<!--                <input type="text" id="airlineName" placeholder="Airline name" required>-->
-<!--                <button type="submit">Add Airline</button>-->
-<!--            </form>-->
-<!--        </div>-->
+<div class="tabs">
+  <div class="tab-buttons">
+      <button class="tab-btn active" data-tab="tab1">Airlines</button>
+      <button class="tab-btn" data-tab="tab2">Aircraft Types</button>
+      <button class="tab-btn" data-tab="tab3">Aircrafts</button>
+      <button class="tab-btn" data-tab="tab4">Files</button>
+  </div>
 
-    <div class="container">
+  <div class="tab-content active" id="tab1">
+      <div class="container">
         <div class="container">
         <div class="table-container">
             <h2>Airlines</h2>
@@ -33,9 +34,46 @@ Airlines Management
             </table>
         </div>
     </div>
-
-
     </div>
+
+
+  </div>
+
+  <div class="tab-content" id="tab2">
+        <div class="container">
+                <div class="container">
+                <div class="table-container">
+                    <h2>Aircraft Types</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Aircraft Type</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aircraftTypesTableBody">
+                            <!-- Table content will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </div>
+  </div>
+
+  <div class="tab-content" id="tab3">
+    <h3>Aircrafts</h3>
+    <p>Контент вкладки 3.</p>
+  </div>
+
+      <div class="tab-content" id="tab4">
+    <h3>Files</h3>
+    <p>Контент вкладки 4.</p>
+  </div>
+</div>
+
+
+
     <div id="popup" class="popup"></div>
 {% endblock %}
 
