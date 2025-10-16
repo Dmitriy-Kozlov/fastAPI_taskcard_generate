@@ -15,18 +15,15 @@ router = APIRouter(
 )
 
 
-# @router.get("/airlines/all", response_model=list[AirlineRead])
-# # async def get_all_users(user=Depends(get_current_active_user)):
-# async def get_all_airlines():
-#     airlines = await AirlineCRUD.find_all()
-#     return [AirlineRead.from_orm(airline) for airline in airlines]
-
-@router.get("/airlines/all")
-async def get_all_users(user=Depends(get_current_active_user)):
-# async def get_all_airlines():
-#     airlines = await AirlineCRUD.get_all_airlines_dict()
+@router.get("/airlines/all", response_model=list[AirlineRead])
+async def get_all_airlines(user=Depends(get_current_active_user)):
     airlines = await AirlineCRUD.find_all()
-    return airlines
+    return [AirlineRead.from_orm(airline) for airline in airlines]
+
+# @router.get("/airlines/all")
+# async def get_all_airlines(user=Depends(get_current_active_user)):
+#     airlines = await AirlineCRUD.get_all_airlines_dict()
+#     return airlines
 
 
 # @router.get("/airlines/{id}", response_model=AirlineRead)

@@ -2,6 +2,7 @@ let airlines = [];
 let aircraftTypes = [];
 let aircrafts = [];
 const token = localStorage.getItem('authToken');
+const aircraftTableBody = document.getElementById('aircraftsTableBody');
 
 async function fetchAirlines() {
     try {
@@ -74,6 +75,7 @@ function airlinesTable() {
                 showToast('Airline created successfully');
                 form.reset();
                 await fetchAirlines();
+                await loadSelects();
             } catch (error) {
                 showToast('Error creating airline', true);
                 console.error(error);
@@ -101,6 +103,7 @@ async function deleteAirline(airlineId) {
         }
 
         await fetchAirlines(); // Refresh the table
+        await loadSelects();
         showToast('Airline deleted successfully');
     } catch (error) {
         console.error('Delete error:', error);
@@ -203,6 +206,11 @@ document.addEventListener('DOMContentLoaded', () => {
       // Активируем нужную вкладку
       button.classList.add('active');
       document.getElementById(targetTab).classList.add('active');
+
+       if (button.dataset.tab === 'tab3') {
+            aircraftTableBody.innerHTML = '<tr><td colspan="3">Выберите авиакомпанию</td></tr>';
+            airlineSelect.value = '';
+        }
     });
   });
 });
@@ -233,6 +241,175 @@ async function deleteAircraftType(aircraftTypeId) {
         showToast('Failed to delete aircraft type');
     }
 }
+
+//document.addEventListener('DOMContentLoaded', async () => {
+    const airlineSelect = document.getElementById('airlineSelect');
+    const newAirlineSelect = document.getElementById('newAirlineSelect');
+    const aircraftTypeSelect = document.getElementById('aircraftTypeSelect');
+    const tableBody = document.getElementById('aircraftsTableBody');
+    const templateInfo = document.getElementById('templateInfo');
+    const modal = document.getElementById('addModal');
+    const addAircraftBtn = document.getElementById('addAircraftBtn');
+    const closeModal = document.getElementById('closeModal');
+    const addAircraftForm = document.getElementById('addAircraftForm');
+
+//    let airlines = [];
+
+    // Загружаем авиакомпании и типы ВС
+    async function loadSelects() {
+        try {
+            const [airlineRes, typeRes] = await Promise.all([
+                fetch('/fleet/airlines/all',{
+                        headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },}),
+                fetch('/fleet/aircraft_type/all',{
+                        headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },})
+            ]);
+
+            airlines = await airlineRes.json();
+            const types = await typeRes.json();
+
+            [airlineSelect, newAirlineSelect].forEach(select => {
+                select.innerHTML = '<option value="">-- Выберите --</option>';
+                airlines.forEach(airline => {
+                    const opt = document.createElement('option');
+                    opt.value = airline.id;
+                    opt.textContent = airline.airline;
+                    select.appendChild(opt);
+                });
+            });
+
+            aircraftTypeSelect.innerHTML = '<option value="">-- Выберите тип --</option>';
+            types.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.aircraft_type;
+                aircraftTypeSelect.appendChild(opt);
+            });
+        } catch (err) {
+            console.error('Ошибка загрузки справочников:', err);
+        }
+    }
+
+    loadSelects();
+
+    // При выборе авиакомпании — загрузить список ВС
+    airlineSelect.addEventListener('change', async () => {
+        const id = airlineSelect.value;
+        tableBody.innerHTML = '';
+        templateInfo.style.display = 'none';
+
+        if (!id) {
+            tableBody.innerHTML = `<tr><td colspan="3">Выберите авиакомпанию</td></tr>`;
+            return;
+        }
+
+        try {
+            const response = await fetch(`/fleet/airlines/${id}`,{
+                        headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },});
+            if (!response.ok) throw new Error('Ошибка запроса');
+            const data = await response.json();
+
+            // Выводим самолёты
+            if (data.aircrafts && data.aircrafts.length > 0) {
+                data.aircrafts.forEach(ac => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${ac.registration_no}</td>
+                        <td>${ac.aircraft_type.aircraft_type}</td>
+                        <td><button class="btn-delete" onclick="deleteAircraft(${ac.id}, ${id})">Удалить</button></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                tableBody.innerHTML = `<tr><td colspan="3">Нет самолётов</td></tr>`;
+            }
+
+            if (data.template) {
+                templateInfo.innerHTML = `<strong>Шаблон:</strong> ${data.template.filename || 'Без имени'}`;
+                templateInfo.style.display = 'block';
+            }
+        } catch (err) {
+            console.error('Ошибка при получении данных:', err);
+            tableBody.innerHTML = `<tr><td colspan="3">Ошибка загрузки</td></tr>`;
+        }
+    });
+
+    // --- Модалка добавления ---
+    addAircraftBtn.onclick = () => (modal.style.display = 'flex');
+    closeModal.onclick = () => (modal.style.display = 'none');
+    window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+
+    // --- Добавление самолёта ---
+    addAircraftForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const airline_id = newAirlineSelect.value;
+        const aircraft_type_id = aircraftTypeSelect.value;
+        const registration_no = document.getElementById('registrationNo').value.trim();
+        console.log(
+        JSON.stringify({
+                  "registration_no": registration_no,
+                  "airline_id": airline_id,
+                  "aircraft_type_id": aircraft_type_id
+                 })
+        )
+        if (!airline_id || !aircraft_type_id || !registration_no) {
+            alert('Заполните все поля');
+            return;
+        }
+
+        try {
+            const response = await fetch('/fleet/aircraft/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                body: JSON.stringify({
+                  "registration_no": registration_no,
+                  "airline_id": airline_id,
+                  "aircraft_type_id": aircraft_type_id
+                 })
+            });
+
+            if (response.ok) {
+                showToast('Aircraft created successfully');
+                modal.style.display = 'none';
+                addAircraftForm.reset();
+                if (airlineSelect.value === airline_id) airlineSelect.dispatchEvent(new Event('change'));
+            } else {
+                const err = await response.json();
+                showToast(`Failed to create aircraft ${err.detail || response.statusText}`);
+//                alert('Ошибка: ' + (err.detail || response.statusText));
+            }
+        } catch (err) {
+            console.error('Ошибка добавления:', err);
+        }
+    });
+//});
+
+// --- Удаление самолёта (глобальная функция) ---
+async function deleteAircraft(id, airline_id) {
+    if (!confirm('Удалить самолёт?')) return;
+    try {
+        const res = await fetch(`/fleet/aircraft/${id}/delete`,
+        { method: 'DELETE',
+         headers: {'Authorization': `Bearer ${authToken}` }});
+        if (res.ok) {
+            showToast('Aircraft successfully deleted');
+            document.getElementById('airlineSelect').dispatchEvent(new Event('change'));
+        } else {
+            const err = await res.json();
+            showToast(`Failed to delete aircraft ${err.detail || res.statusText}`);
+//            alert('Ошибка: ' + (err.detail || res.statusText));
+        }
+    } catch (err) {
+        console.error('Ошибка удаления:', err);
+    }
+}
+
 
 
 fetchAirlines();

@@ -50,7 +50,8 @@ class AircraftCreate(AircraftBase):
     aircraft_type_id: int
 
 
-class AircraftWithType(AircraftBase):
+# class AircraftWithType(AircraftBase):
+class AircraftWithType(AircraftRead):
     aircraft_type: AircraftTypeBase
 
 

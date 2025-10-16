@@ -62,17 +62,54 @@ Airlines Management
   </div>
 
   <div class="tab-content" id="tab3">
-    <h3>Aircrafts</h3>
-    <p>Контент вкладки 3.</p>
-  </div>
+<div class="container">
+        <h2>Самолёты авиакомпаний</h2>
 
-      <div class="tab-content" id="tab4">
-    <h3>Files</h3>
-    <p>Контент вкладки 4.</p>
+        <div class="selector">
+            <label for="airlineSelect">Авиакомпания:</label>
+            <select id="airlineSelect">
+                <option value="">-- Выберите --</option>
+            </select>
+            <button id="addAircraftBtn" class="btn-primary">+ Добавить самолёт</button>
+        </div>
+
+        <div id="templateInfo" class="template-info"></div>
+
+        <table id="aircraftsTable">
+            <thead>
+                <tr>
+                    <th>Регистрационный №</th>
+                    <th>Тип самолёта</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="aircraftsTableBody">
+                <tr><td colspan="3">Выберите авиакомпанию</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Модальное окно добавления -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal" class="close">&times;</span>
+            <h3>Добавить самолёт</h3>
+            <form id="addAircraftForm">
+                <label>Авиакомпания:</label>
+                <select id="newAirlineSelect" required></select>
+
+                <label>Тип самолёта:</label>
+                <select id="aircraftTypeSelect" required></select>
+
+                <label>Регистрационный номер:</label>
+                <input type="text" id="registrationNo" required placeholder="Например: VP-BXY">
+
+                <button type="submit" class="btn-primary">Добавить</button>
+            </form>
+        </div>
+    </div>
   </div>
 </div>
-
-
 
     <div id="popup" class="popup"></div>
 {% endblock %}
