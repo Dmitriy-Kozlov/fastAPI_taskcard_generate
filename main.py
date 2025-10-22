@@ -7,7 +7,6 @@ from starlette.responses import FileResponse
 from starlette.staticfiles import StaticFiles
 
 from schemas import AircraftIn, AircraftInNew
-from airbus_data.schemas import AirbusFileRead
 import os
 
 from generate_taskcards import generate_taskcards, generate_taskcards_new
@@ -16,7 +15,6 @@ from users.schemas import UserCreate
 from utils import zip_files
 from init_superuser import init_superuser
 from all_fleet.crud import AirlineCRUD
-from airbus_data.crud import AirbusFileCRUD
 from users.router import router as user_router
 from all_fleet.router import router as fleet_router
 from airbus_data.router import router as airbus_data_router
@@ -127,7 +125,4 @@ def download_file(filename: str,  user = Depends(get_current_active_user)):
     return FileResponse(path=zip_path, filename="Taskcards.zip", media_type="application/zip")
 
 
-@app.post("/remake_files", response_model=list[AirbusFileRead])
-async def remake_files_after_upload(atype: int,  user = Depends(get_current_active_admin)):
-    result = await AirbusFileCRUD.get_amm_ipc_mpd_files(atype)
-    return result
+

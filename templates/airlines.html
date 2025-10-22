@@ -16,9 +16,8 @@ Airlines Management
   </div>
 
   <div class="tab-content active" id="tab1">
-      <div class="container">
         <div class="container">
-        <div class="table-container">
+<!--        <div class="table-container">-->
             <h2>Airlines</h2>
             <table>
                 <thead>
@@ -33,16 +32,14 @@ Airlines Management
                 </tbody>
             </table>
         </div>
-    </div>
-    </div>
+<!--    </div>-->
 
 
   </div>
 
   <div class="tab-content" id="tab2">
-        <div class="container">
                 <div class="container">
-                <div class="table-container">
+<!--                <div class="table-container">-->
                     <h2>Aircraft Types</h2>
                     <table>
                         <thead>
@@ -57,8 +54,7 @@ Airlines Management
                         </tbody>
                     </table>
                 </div>
-            </div>
-            </div>
+<!--            </div>-->
   </div>
 
   <div class="tab-content" id="tab3">
@@ -110,6 +106,134 @@ Airlines Management
     </div>
   </div>
 </div>
+
+  <div class="tab-content" id="tab4">
+    <div class="container">
+        <section class="card">
+        <h2>Файлы Airbus (JSON / XLSX)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Тип документа</th>
+                    <th>Тип ВС</th>
+                    <th>Ревизия</th>
+                    <th>Статус</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="airbusFilesBody">
+                <tr><td colspan="6">Нет данных</td></tr>
+            </tbody>
+        </table>
+
+        <form id="airbusUploadForm" enctype="multipart/form-data">
+            <select id="documentType" required>
+                <option value="">Тип документа</option>
+                <option value="AMM">AMM</option>
+                <option value="IPC">IPC</option>
+                <option value="MPD">MPD</option>
+            </select>
+
+            <select id="filesAircraftTypeSelect" required></select>
+
+            <input type="number" id="revisionNo" placeholder="Ревизия" required>
+
+            <input type="file" id="airbusFile" accept=".json,.xlsx" required>
+
+            <button type="submit">Загрузить файл</button>
+        </form>
+    </section>
+
+    <!-- Блок Template Files -->
+    <section class="card">
+        <h2>Шаблоны Word (.docx)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Авиакомпания</th>
+                    <th>Название шаблона</th>
+                    <th>Статус</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="templatesBody">
+                <tr><td colspan="5">Нет данных</td></tr>
+            </tbody>
+        </table>
+
+        <form id="templateUploadForm" enctype="multipart/form-data">
+            <select id="filesAirlineSelect" required></select>
+            <input type="text" id="templateTitle" placeholder="Название шаблона" required>
+            <input type="file" id="templateFile" accept=".docx" required>
+            <button type="submit">Загрузить шаблон</button>
+        </form>
+    </section>
+    </div>
+  </div>
+
+  <!-- Edit File Modal -->
+    <div id="editFileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit File</h3>
+                <button class="close-modal" onclick="closeFileModal()">&times;</button>
+            </div>
+            <form id="editFileForm">
+                <input type="hidden" id="fileId">
+                <input type="hidden" id="fileAircraftType">
+                <div class="form-group">
+                    <label for="documentEditType">Document Type</label>
+                  <select id="documentEditType" required>
+                <option value="AMM">AMM</option>
+                <option value="IPC">IPC</option>
+                <option value="MPD">MPD</option>
+            </select>
+                </div>
+                <div class="form-group">
+                    <label for="documentEditRevisionNo">Revision</label>
+                    <input type="number" id="documentEditRevisionNo" required>
+                </div>
+                <div class="form-group">
+                    <label for="documentEditStatus">Active</label>
+                    <input type="checkbox" id="documentEditStatus">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeFileModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<!-- Edit Template Modal -->
+    <div id="editTemplateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit File</h3>
+                <button class="close-modal" onclick="closeTemplateModal()">&times;</button>
+            </div>
+            <form id="editTemplateForm">
+                <input type="hidden" id="templateId">
+                <input type="hidden" id="templateAirlineId">
+                <div class="form-group">
+                    <label for="templateEditTitle">Title</label>
+                    <input type="text" id="templateEditTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="templateEditStatus">Active</label>
+                    <input type="checkbox" id="templateEditStatus">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeTemplateModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
 
     <div id="popup" class="popup"></div>
 {% endblock %}

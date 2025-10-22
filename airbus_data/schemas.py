@@ -1,7 +1,7 @@
 from enum import Enum
 
 from pydantic import BaseModel, Field
-
+from all_fleet.schemas import AircraftTypeBase, AirlineBase
 
 class DocumentType(str, Enum):
     AMM = "AMM"
@@ -15,9 +15,15 @@ class AirbusFileBase(BaseModel):
     revision_no: int
 
 
+class AirbusFileEdit(AirbusFileBase):
+    id: int
+    active: bool
+
+
 class AirbusFileRead(AirbusFileBase):
     id: int
     active: bool
+    aircraft_type: AircraftTypeBase
 
     class Config:
         from_attributes = True
@@ -32,9 +38,15 @@ class TemplateFileBase(BaseModel):
     title: str
 
 
+class TemplateFileEdit(TemplateFileBase):
+    id: int
+    active: bool
+
+
 class TemplateFileRead(TemplateFileBase):
     id: int
     active: bool
+    airline: AirlineBase
 
     class Config:
         from_attributes = True

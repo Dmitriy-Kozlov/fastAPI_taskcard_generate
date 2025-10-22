@@ -1,6 +1,8 @@
 let airlines = [];
 let aircraftTypes = [];
 let aircrafts = [];
+let templates = [];
+let afiles = [];
 const token = localStorage.getItem('authToken');
 const aircraftTableBody = document.getElementById('aircraftsTableBody');
 
@@ -76,6 +78,7 @@ function airlinesTable() {
                 form.reset();
                 await fetchAirlines();
                 await loadSelects();
+                await loadRefs();
             } catch (error) {
                 showToast('Error creating airline', true);
                 console.error(error);
@@ -182,6 +185,8 @@ function aircraftTypesTable() {
                 showToast('Aircraft type created successfully');
                 aircraftTypesForm.reset();
                 await fetchAircraftTypes();
+                await loadSelects();
+                await loadRefs();
             } catch (error) {
                 showToast('Error creating aircraft type', true);
                 console.error(error);
@@ -351,13 +356,6 @@ async function deleteAircraftType(aircraftTypeId) {
         const airline_id = newAirlineSelect.value;
         const aircraft_type_id = aircraftTypeSelect.value;
         const registration_no = document.getElementById('registrationNo').value.trim();
-        console.log(
-        JSON.stringify({
-                  "registration_no": registration_no,
-                  "airline_id": airline_id,
-                  "aircraft_type_id": aircraft_type_id
-                 })
-        )
         if (!airline_id || !aircraft_type_id || !registration_no) {
             alert('Заполните все поля');
             return;
@@ -409,6 +407,360 @@ async function deleteAircraft(id, airline_id) {
         console.error('Ошибка удаления:', err);
     }
 }
+
+    const airbusFilesBody = document.getElementById('airbusFilesBody');
+    const airbusForm = document.getElementById('airbusUploadForm');
+    const filesAircraftTypeSelect = document.getElementById('filesAircraftTypeSelect');
+
+    const templatesBody = document.getElementById('templatesBody');
+    const templateForm = document.getElementById('templateUploadForm');
+    const filesAirlineSelect = document.getElementById('filesAirlineSelect');
+
+    const popup = document.getElementById('popup');
+
+    // --- Уведомления ---
+    function showPopup(msg, color = '#0073e6') {
+        popup.textContent = msg;
+        popup.style.background = color;
+        popup.style.display = 'block';
+        setTimeout(() => popup.style.display = 'none', 3000);
+    }
+
+    // --- Загрузка Airbus файлов ---
+    async function loadAirbusFiles() {
+        const response = await fetch('/airbus_files/all',{
+                        headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },});
+        afiles = await response.json();
+        airbusFilesBody.innerHTML = '';
+        if (!afiles.length) {
+            airbusFilesBody.innerHTML = '<tr><td colspan="5">Нет данных</td></tr>';
+            return;
+        }
+
+        afiles.forEach(f => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${f.id}</td>
+                <td>${f.document_type}</td>
+                <td>${f.aircraft_type.aircraft_type}</td>
+                <td>${f.revision_no}</td>
+                <td>
+                    <span class="status-badge ${f.active ? 'status-enabled' : 'status-disabled'}">
+                        ${f.active ? 'Active' : 'Disabled'}
+                    </span>
+                </td>
+                <td>
+                <button class="btn-edit" onclick="openEditFileModal(${f.id})">Edit</button>
+                <button class="btn-delete" onclick="deleteFile(${f.id})">Delete</button>
+                </td>
+                `;
+            airbusFilesBody.appendChild(row);
+        });
+    }
+
+    // --- Загрузка шаблонов ---
+    async function loadTemplates() {
+        const response = await fetch('/airbus_files/templates/all',{
+                        headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },});
+        templates = await response.json();
+
+        templatesBody.innerHTML = '';
+        if (!templates.length) {
+            templatesBody.innerHTML = '<tr><td colspan="4">Нет данных</td></tr>';
+            return;
+        }
+
+        templates.forEach(t => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${t.id}</td>
+                <td>${t.airline.airline}</td>
+                <td>${t.title}</td>
+                <td>
+                    <span class="status-badge ${t.active ? 'status-enabled' : 'status-disabled'}">
+                        ${t.active ? 'Active' : 'Disabled'}
+                    </span>
+                </td>
+                <td>
+                <button class="btn-edit" onclick="openEditTemplateModal(${t.id})">Edit</button>
+                <button class="btn-delete" onclick="deleteTemplate(${t.id})">Delete</button>
+                </td>
+            `;
+            templatesBody.appendChild(row);
+        });
+    }
+
+function openEditFileModal(fileId) {
+const afile = afiles.find(f => f.id === fileId);
+console.log(afile)
+console.log(afiles)
+if (!afile) return;
+document.getElementById('documentEditType').value = afile.document_type;
+document.getElementById('documentEditRevisionNo').value = afile.revision_no;
+document.getElementById('documentEditStatus').checked = afile.active;
+document.getElementById('fileId').value = afile.id;
+document.getElementById('fileAircraftType').value = afile.aircraft_type_id;
+
+document.getElementById('editFileModal').style.display = 'flex';
+}
+
+function closeFileModal() {
+    document.getElementById('editFileModal').style.display = 'none';
+}
+
+
+
+function openEditTemplateModal(templateId) {
+const template = templates.find(t => t.id === templateId);
+console.log(template)
+console.log(templates)
+if (!template) return;
+document.getElementById('templateId').value = template.id;
+document.getElementById('templateAirlineId').value = template.airline_id;
+document.getElementById('templateEditTitle').value = template.title;
+document.getElementById('templateEditStatus').checked = template.active;
+
+document.getElementById('editTemplateModal').style.display = 'flex';
+}
+
+function closeTemplateModal() {
+    document.getElementById('editTemplateModal').style.display = 'none';
+}
+
+
+
+    // --- Загрузка справочников ---
+    async function loadRefs() {
+        const [typesRes, airlinesRes] = await Promise.all([
+            fetch('/fleet/aircraft_type/all',{
+                        headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },}),
+            fetch('/fleet/airlines/all',{
+                        headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },})
+        ]);
+
+        const [types, airlines] = await Promise.all([typesRes.json(), airlinesRes.json()]);
+        // Типы ВС
+        filesAircraftTypeSelect.innerHTML = '<option value="">Тип ВС</option>';
+        types.forEach(t => {
+            const option = document.createElement('option');
+            option.value = t.id;
+            option.textContent = t.aircraft_type;
+            filesAircraftTypeSelect.appendChild(option);
+        });
+
+        // Авиакомпании
+        filesAirlineSelect.innerHTML = '<option value="">Авиакомпания</option>';
+        airlines.forEach(a => {
+            const option = document.createElement('option');
+            option.value = a.id;
+            option.textContent = a.airline;
+            filesAirlineSelect.appendChild(option);
+        });
+    }
+
+    // --- Добавление Airbus файла ---
+    airbusForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('document_type', document.getElementById('documentType').value);
+        formData.append('aircraft_type_id', filesAircraftTypeSelect.value);
+        formData.append('revision_no', document.getElementById('revisionNo').value);
+        formData.append('file', document.getElementById('airbusFile').files[0]);
+
+        const res = await fetch('/airbus_files/add', {
+            method: 'POST',
+            headers: {'Authorization': `Bearer ${authToken}` },
+            body: formData
+        });
+
+        if (res.ok) {
+            showToast('Файл Airbus успешно добавлен');
+            airbusForm.reset();
+            loadAirbusFiles();
+        } else {
+            showToast('Ошибка при добавлении файла Airbus');
+        }
+    });
+
+    // --- Добавление шаблона ---
+    templateForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('airline_id', filesAirlineSelect.value);
+        formData.append('title', document.getElementById('templateTitle').value);
+        formData.append('file', document.getElementById('templateFile').files[0]);
+
+        const res = await fetch('/airbus_files/templates/add', {
+            headers: {'Authorization': `Bearer ${authToken}` },
+            method: 'POST',
+            body: formData
+        });
+
+        if (res.ok) {
+            showToast('Шаблон успешно добавлен');
+            templateForm.reset();
+            loadTemplates();
+        } else {
+            showToast('Ошибка при добавлении шаблона');
+        }
+    });
+
+
+document.getElementById('editFileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const fileId = document.getElementById('fileId').value;
+    const fileData = {
+        document_type: document.getElementById('documentEditType').value,
+        aircraft_type_id: document.getElementById('fileAircraftType').value,
+        revision_no: document.getElementById('documentEditRevisionNo').value,
+        active: document.getElementById('documentEditStatus').checked,
+    };
+
+    try {
+        const response = await fetch(`/airbus_files/edit`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                id: fileId,
+                ...fileData
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.log(response.status)
+            throw new Error(`${errorData.detail}`);
+        }
+        if (response.status === 401) {
+            localStorage.removeItem("authToken");
+            window.location.href='/pages/auth';
+        }
+
+        await loadAirbusFiles();
+        closeFileModal();
+        showToast('File updated successfully');
+    } catch (error) {
+        console.error('Update error:', error);
+        showToast(`Failed to update file. ${error}`);
+    }
+});
+
+
+async function deleteFile(fileId) {
+    if (!confirm('Are you sure you want to delete this file?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/airbus_files/${fileId}/delete`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete file');
+        }
+
+        await loadAirbusFiles(); // Refresh the table
+        showToast('File deleted successfully');
+    } catch (error) {
+        console.error('Delete error:', error);
+        showToast('Failed to delete file');
+    }
+}
+
+
+
+document.getElementById('editTemplateForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const templateId = document.getElementById('templateId').value;
+    const templateData = {
+        airline_id: document.getElementById('templateAirlineId').value,
+        title: document.getElementById('templateEditTitle').value,
+        active: document.getElementById('templateEditStatus').checked,
+    };
+
+    try {
+        const response = await fetch(`/airbus_files/templates/edit`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                id: templateId,
+                ...templateData
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.log(response.status)
+            throw new Error(`${errorData.detail}`);
+        }
+        if (response.status === 401) {
+            localStorage.removeItem("authToken");
+            window.location.href='/pages/auth';
+        }
+
+        await loadTemplates();
+        closeTemplateModal();
+        showToast('Template updated successfully');
+    } catch (error) {
+        console.error('Update error:', error);
+        showToast(`Failed to update tempalte. ${error}`);
+    }
+});
+
+
+async function deleteTemplate(templateId) {
+    if (!confirm('Are you sure you want to delete this template?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/airbus_files/templates/${templateId}/delete`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete template');
+        }
+
+        await loadTemplates(); // Refresh the table
+        showToast('Template deleted successfully');
+    } catch (error) {
+        console.error('Delete error:', error);
+        showToast('Failed to delete template');
+    }
+}
+
+
+
+    // --- Первичная загрузка ---
+    loadRefs();
+    loadAirbusFiles();
+    loadTemplates();
 
 
 

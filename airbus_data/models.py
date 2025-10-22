@@ -14,6 +14,9 @@ class AirbusFile(Base):
     revision_no: Mapped[int] = mapped_column(Integer, nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    aircraft_type: Mapped["AircraftType"] = relationship("AircraftType", back_populates="airbus_files", lazy="joined")
+
+
 
 class TaskTemplate(Base):
     __tablename__ = 'task_templates'

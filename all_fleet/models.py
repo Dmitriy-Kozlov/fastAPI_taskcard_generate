@@ -19,6 +19,8 @@ class AircraftType(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     aircraft_type: Mapped[str] = mapped_column(nullable=False)
     aircrafts: Mapped[List["Aircraft"]] = relationship(back_populates="aircraft_type")
+    airbus_files: Mapped[list["AirbusFile"]] = relationship("AirbusFile", back_populates="aircraft_type")
+
 
 
 class Aircraft(Base):

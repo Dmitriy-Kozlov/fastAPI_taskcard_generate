@@ -14,6 +14,7 @@ from airbus_data.models import AirbusFile, TaskTemplate
 from all_fleet.models import AircraftType
 from base.crud import BaseCRUD
 from airbus_data.schemas import AirbusFileCreate, TemplateFileCreate
+from sqlalchemy.orm import joinedload, selectinload
 
 FILES_PATH = "files/airbus_files"
 
@@ -31,6 +32,16 @@ class AirbusFileCRUD(BaseCRUD):
     #         result = await session.execute(query)
     #         plain_result = result.scalars().all()
     #         return plain_result
+    @classmethod
+    async def get_all_files_with_aircraft_types(cls):
+        async with async_session_maker() as session:
+            query = (
+                select(cls.model)
+                .options(joinedload(cls.model.aircraft_type))
+            )
+            result = await session.execute(query)
+            files = result.scalars().all()
+            return files
 
     @classmethod
     async def add(cls, document_type, aircraft_type_id, revision_no, file):
@@ -47,12 +58,22 @@ class AirbusFileCRUD(BaseCRUD):
                 os.makedirs(FILES_PATH, exist_ok=True)
                 with open(f"{FILES_PATH}/{new_instance.id}.{file_extension}", "wb") as buffer:
                     shutil.copyfileobj(file.file, buffer)
-                try:
-                    await session.commit()
-                except SQLAlchemyError as e:
-                    await session.rollback()
-                    raise e
-                return new_instance
+                # try:
+                #     await session.commit()
+                # except SQLAlchemyError as e:
+                #     await session.rollback()
+                #     raise e
+                # return new_instance
+            async with async_session_maker() as session:
+                query = (
+                    select(cls.model)
+                    .options(selectinload(cls.model.aircraft_type))
+                    .where(cls.model.id == new_instance.id)
+                )
+                result = await session.execute(query)
+                instance_with_rel = result.scalar_one()
+
+            return instance_with_rel
 
     # @classmethod
     # async def download(cls, presentation_id: int):
@@ -161,3 +182,14 @@ class TemplateFileCRUD(BaseCRUD):
                 result = await session.execute(query)
                 plain_result = result.scalar_one_or_none()
                 return plain_result
+
+    @classmethod
+    async def get_all_templates_with_airlines(cls):
+        async with async_session_maker() as session:
+            query = (
+                select(cls.model)
+                .options(joinedload(cls.model.airline))
+            )
+            result = await session.execute(query)
+            airlines = result.scalars().all()
+            return airlines

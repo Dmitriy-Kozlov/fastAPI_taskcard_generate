@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends
-from airbus_data.schemas import AirbusFileRead, AirbusFileCreate, DocumentType, TemplateFileRead, TemplateFileCreate
+from airbus_data.schemas import AirbusFileRead, TemplateFileEdit, DocumentType, TemplateFileRead, TemplateFileCreate, AirbusFileEdit
 from airbus_data.crud import AirbusFileCRUD, TemplateFileCRUD
 from users.router import get_current_active_user, get_current_active_admin
 
@@ -24,7 +24,8 @@ async def add_airbus_file(
 
 @router.get("/all", response_model=list[AirbusFileRead])
 async def get_all_airbus_files():
-    airbus_files = await AirbusFileCRUD.find_all()
+    # airbus_files = await AirbusFileCRUD.find_all()
+    airbus_files = await AirbusFileCRUD.get_all_files_with_aircraft_types()
     return airbus_files
 
 #
@@ -51,8 +52,8 @@ async def get_all_airbus_files():
 #     return presentation
 
 
-@router.put("/edit", response_model=AirbusFileRead)
-async def edit_airbus_file_by_id(airbus_file: AirbusFileRead,
+@router.put("/edit", response_model=AirbusFileEdit)
+async def edit_airbus_file_by_id(airbus_file: AirbusFileEdit,
 # async def edit_airbus_file_by_id(id: int,
                                    user=Depends(get_current_active_admin)
                                    ):
@@ -84,12 +85,12 @@ async def add_template(
             response_model=list[TemplateFileRead]
             )
 async def get_all_templates():
-    template_files = await TemplateFileCRUD.find_all()
+    template_files = await TemplateFileCRUD.get_all_templates_with_airlines()
     return template_files
 
 
-@router.put("/templates/edit", response_model=TemplateFileRead)
-async def edit_template_file_by_id(template_file: TemplateFileRead,
+@router.put("/templates/edit", response_model=TemplateFileEdit)
+async def edit_template_file_by_id(template_file: TemplateFileEdit,
                                    user=Depends(get_current_active_admin)
                                    ):
     result = await TemplateFileCRUD.edit(**template_file.dict())
@@ -103,3 +104,8 @@ async def delete_template_by_id(id: int,
     result = await TemplateFileCRUD.delete(id)
     return result
 
+
+@router.post("/remake_files", response_model=list[AirbusFileRead])
+async def remake_files_after_upload(atype: int,  user = Depends(get_current_active_admin)):
+    result = await AirbusFileCRUD.get_amm_ipc_mpd_files(atype)
+    return result
