@@ -70,7 +70,7 @@ async def delete_airbus_file_by_id(id: int,
 
 
 
-@router.post("/templates/add", response_model=TemplateFileRead)
+@router.post("/templates/add", response_model=TemplateFileEdit)
 async def add_template(
         user=Depends(get_current_active_admin),
         airline_id: int = Form(...),

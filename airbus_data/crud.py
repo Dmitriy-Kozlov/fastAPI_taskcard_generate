@@ -110,12 +110,14 @@ class AirbusFileCRUD(BaseCRUD):
     async def get_amm_ipc_mpd_files(cls, atype_id: int):
         async with async_session_maker() as session:
             async with session.begin():
-                query = select(cls.model).filter_by(aircraft_type_id=atype_id, active=True)
+                query = select(cls.model).filter_by(aircraft_type_id=atype_id, active=True).limit(4)
                 result = await session.execute(query)
                 plain_result = result.scalars().all()
                 query = select(AircraftType).filter_by(id=atype_id)
                 result = await session.execute(query)
                 type_result = result.scalar_one_or_none()
+                if len(plain_result) > 3:
+                    raise HTTPException(status_code=400, detail="Active files more than 3")
 
             # Разбор полученных файлов
         mpd_id = next((obj.id for obj in plain_result if obj.document_type == "MPD"), None)
@@ -126,7 +128,7 @@ class AirbusFileCRUD(BaseCRUD):
         amm_file = f"{FILES_PATH}/{amm_id}.json"
         atype = type_result.aircraft_type
         if not mpd_id or not ipc_id or not amm_id:
-            raise HTTPException(status_code=400, detail={"Not found": f"{mpd_id=}, {ipc_id=}, {amm_id=}"})
+            raise HTTPException(status_code=400, detail=f"Not found. {mpd_id=}, {ipc_id=}, {amm_id=}")
         collect_from_mpd(mpd_file, atype)
         parse_IPC(ipc_file, atype)
         parse_tool_material_from_AMM(amm_file, atype)

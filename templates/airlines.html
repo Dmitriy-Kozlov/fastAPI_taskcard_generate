@@ -110,7 +110,10 @@ Airlines Management
   <div class="tab-content" id="tab4">
     <div class="container">
         <section class="card">
-        <h2>Файлы Airbus (JSON / XLSX)</h2>
+                <div class="container">
+                    <h2>Файлы Airbus (JSON / XLSX)</h2>
+                    <button id="remakeFilesBtn" class="btn-primary" onclick="openRemakeFileModal()">Remake files</button>
+                </div>
         <table>
             <thead>
                 <tr>
@@ -172,6 +175,22 @@ Airlines Management
     </section>
     </div>
   </div>
+
+  <!-- Remake File Modal -->
+    <div id="remakeFileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Remake File</h3>
+                <button class="close-modal" onclick="closeRemakeFileModal()">&times;</button>
+            </div>
+            <form id="remakeFileForm">
+                <label>Тип самолёта:</label>
+                <select id="remakeAircraftTypeSelect" required></select>
+                <button id="remakeBtn" type="submit" class="btn-primary" >Remake files</button>
+            </form>
+        </div>
+    </div>
+
 
   <!-- Edit File Modal -->
     <div id="editFileModal" class="modal">

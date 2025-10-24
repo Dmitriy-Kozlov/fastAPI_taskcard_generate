@@ -251,12 +251,17 @@ async function deleteAircraftType(aircraftTypeId) {
     const airlineSelect = document.getElementById('airlineSelect');
     const newAirlineSelect = document.getElementById('newAirlineSelect');
     const aircraftTypeSelect = document.getElementById('aircraftTypeSelect');
+    const remakeAircraftTypeSelect = document.getElementById('remakeAircraftTypeSelect');
     const tableBody = document.getElementById('aircraftsTableBody');
     const templateInfo = document.getElementById('templateInfo');
     const modal = document.getElementById('addModal');
+    const remakeFileModal = document.getElementById('remakeFileModal');
     const addAircraftBtn = document.getElementById('addAircraftBtn');
     const closeModal = document.getElementById('closeModal');
+    const remakeFilesBtn = document.getElementById('remakeFilesBtn');
+    const closeRemakeFilesModal = document.getElementById('closeRemakeFilesModal');
     const addAircraftForm = document.getElementById('addAircraftForm');
+    const remakeFileForm = document.getElementById('remakeFileForm');
 
 //    let airlines = [];
 
@@ -438,7 +443,7 @@ async function deleteAircraft(id, airline_id) {
             airbusFilesBody.innerHTML = '<tr><td colspan="5">Нет данных</td></tr>';
             return;
         }
-
+        afiles.sort((a, b) => a.id - b.id);
         afiles.forEach(f => {
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -511,6 +516,51 @@ document.getElementById('editFileModal').style.display = 'flex';
 function closeFileModal() {
     document.getElementById('editFileModal').style.display = 'none';
 }
+
+
+function openRemakeFileModal() {
+remakeAircraftTypeSelect.innerHTML = '<option value="">-- Выберите тип --</option>';
+            aircraftTypes.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.aircraft_type;
+                remakeAircraftTypeSelect.appendChild(opt);
+            })
+document.getElementById('remakeFileModal').style.display = 'flex';
+}
+
+function closeRemakeFileModal() {
+    document.getElementById('remakeFileModal').style.display = 'none';
+}
+
+remakeFileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const atype = parseInt(document.getElementById('remakeAircraftTypeSelect').value);
+        const remakeBtn = document.getElementById('remakeBtn');
+        try {
+            remakeBtn.disabled = true;
+             remakeBtn.textContent = 'Processing...';
+            const response = await fetch(`/airbus_files/remake_files?atype=${atype}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            });
+
+            if (response.ok) {
+                showToast('Remake files successfully');
+                remakeFileModal.style.display = 'none';
+                remakeFileForm.reset();
+            } else {
+                const err = await response.json();
+                showToast(`Failed to remake files ${err.detail || response.statusText}`);
+            }
+        } catch (err) {
+            console.error('Filed to remake files:', err);
+        } finally {
+        // скрыть спинер
+        remakeBtn.disabled = false;
+         remakeBtn.textContent = 'Remake files';
+    }});
+
 
 
 
