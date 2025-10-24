@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}
+Generate taskcards
+{% endblock %}
+{% block nav_title %}Generate taskcards{% endblock %}
+{% block content %}
+
+<!--    <div class="container">-->
+    <div class="container">
+         <section class="card">
+<!--        <div class="table-container">-->
+        <h2>Generate taskcards</h2>
+
+        <form id="generateTaskcardsForm">
+
+            <label for="airlineSelect">Airline:</label>
+                <select id="airlineSelect" required>
+                <option value="">-- Select airline --</option>
+            </select>
+
+            <label for="aircraftSelect">Aircraft:</label>
+                <select id="aircraftSelect" required>
+                <option value="">-- Select aircraft--</option>
+            </select>
+
+                <label>Taskcards list:</label>
+                <input type="text" id="taskcardList" required>
+
+                <button type="submit" id="generateBtn" class="btn-primary">Generate</button>
+            </form>
+<!--        </div>-->
+         </section>
+<!--              <div id="generateResult" class="resultbox" style="display: none;"></div>-->
+<!--                  <div class="container">-->
+<!--        <div class="table-container">-->
+         <section class="card">
+            <h2>Results</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Taskcards</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                    <!-- Table content will be populated by JavaScript -->
+                </tbody>
+            </table>
+         </section>
+        </div>
+<!--    </div>-->
+<!--    </div>-->
+
+{% endblock %}
+
+{% block script %}
+<script src="/static/js/generate_taskcards.js"></script>
+{% endblock %}

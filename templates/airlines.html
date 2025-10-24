@@ -59,14 +59,14 @@ Airlines Management
 
   <div class="tab-content" id="tab3">
 <div class="container">
-        <h2>Самолёты авиакомпаний</h2>
+        <h2>Aircrafts</h2>
 
         <div class="selector">
-            <label for="airlineSelect">Авиакомпания:</label>
+            <label for="airlineSelect">Airline:</label>
             <select id="airlineSelect">
-                <option value="">-- Выберите --</option>
+                <option value="">-- Select --</option>
             </select>
-            <button id="addAircraftBtn" class="btn-primary">+ Добавить самолёт</button>
+            <button id="addAircraftBtn" class="btn-primary">+ add aircraft</button>
         </div>
 
         <div id="templateInfo" class="template-info"></div>
@@ -74,13 +74,13 @@ Airlines Management
         <table id="aircraftsTable">
             <thead>
                 <tr>
-                    <th>Регистрационный №</th>
-                    <th>Тип самолёта</th>
-                    <th>Действия</th>
+                    <th>Registration №</th>
+                    <th>Aircraft type</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="aircraftsTableBody">
-                <tr><td colspan="3">Выберите авиакомпанию</td></tr>
+                <tr><td colspan="3">Select airline</td></tr>
             </tbody>
         </table>
     </div>
@@ -89,92 +89,93 @@ Airlines Management
     <div id="addModal" class="modal">
         <div class="modal-content">
             <span id="closeModal" class="close">&times;</span>
-            <h3>Добавить самолёт</h3>
+            <h3>Add aircraft</h3>
             <form id="addAircraftForm">
-                <label>Авиакомпания:</label>
+                <label>Airline:</label>
                 <select id="newAirlineSelect" required></select>
 
-                <label>Тип самолёта:</label>
+                <label>Aircraft type:</label>
                 <select id="aircraftTypeSelect" required></select>
 
-                <label>Регистрационный номер:</label>
-                <input type="text" id="registrationNo" required placeholder="Например: VP-BXY">
+                <label>Registration №:</label>
+                <input type="text" id="registrationNo" required placeholder="Example: VP-BXY">
 
-                <button type="submit" class="btn-primary">Добавить</button>
+                <button type="submit" class="btn-primary">Add</button>
             </form>
         </div>
     </div>
   </div>
-</div>
-
   <div class="tab-content" id="tab4">
-    <div class="container">
-        <section class="card">
+
+        <div class="container">
+            <section class="card">
                 <div class="container">
-                    <h2>Файлы Airbus (JSON / XLSX)</h2>
+                    <h2>Airbus files (JSON / XLSX)</h2>
                     <button id="remakeFilesBtn" class="btn-primary" onclick="openRemakeFileModal()">Remake files</button>
                 </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Тип документа</th>
-                    <th>Тип ВС</th>
-                    <th>Ревизия</th>
-                    <th>Статус</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="airbusFilesBody">
-                <tr><td colspan="6">Нет данных</td></tr>
-            </tbody>
-        </table>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Document type</th>
+                        <th>Airline type</th>
+                        <th>Revision</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="airbusFilesBody">
+                    <tr><td colspan="6">No data</td></tr>
+                    </tbody>
+                </table>
 
-        <form id="airbusUploadForm" enctype="multipart/form-data">
-            <select id="documentType" required>
-                <option value="">Тип документа</option>
-                <option value="AMM">AMM</option>
-                <option value="IPC">IPC</option>
-                <option value="MPD">MPD</option>
-            </select>
+                <form id="airbusUploadForm" enctype="multipart/form-data">
+                    <select id="documentType" required>
+                        <option value="">Document type</option>
+                        <option value="AMM">AMM</option>
+                        <option value="IPC">IPC</option>
+                        <option value="MPD">MPD</option>
+                    </select>
 
-            <select id="filesAircraftTypeSelect" required></select>
+                    <select id="filesAircraftTypeSelect" required></select>
 
-            <input type="number" id="revisionNo" placeholder="Ревизия" required>
+                    <input type="number" id="revisionNo" placeholder="Revision" required>
 
-            <input type="file" id="airbusFile" accept=".json,.xlsx" required>
+                    <input type="file" id="airbusFile" accept=".json,.xlsx" required>
 
-            <button type="submit">Загрузить файл</button>
-        </form>
-    </section>
+                    <button type="submit">Upload file</button>
+                </form>
+            </section>
 
-    <!-- Блок Template Files -->
-    <section class="card">
-        <h2>Шаблоны Word (.docx)</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Авиакомпания</th>
-                    <th>Название шаблона</th>
-                    <th>Статус</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="templatesBody">
-                <tr><td colspan="5">Нет данных</td></tr>
-            </tbody>
-        </table>
+            <!-- Блок Template Files -->
+            <section class="card">
+                <h2>Templates (.docx)</h2>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Airlines</th>
+                        <th>Template name</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="templatesBody">
+                    <tr><td colspan="5">No data</td></tr>
+                    </tbody>
+                </table>
 
-        <form id="templateUploadForm" enctype="multipart/form-data">
-            <select id="filesAirlineSelect" required></select>
-            <input type="text" id="templateTitle" placeholder="Название шаблона" required>
-            <input type="file" id="templateFile" accept=".docx" required>
-            <button type="submit">Загрузить шаблон</button>
-        </form>
-    </section>
+                <form id="templateUploadForm" enctype="multipart/form-data">
+                    <select id="filesAirlineSelect" required></select>
+                    <input type="text" id="templateTitle" placeholder="Template name" required>
+                    <input type="file" id="templateFile" accept=".docx" required>
+                    <button type="submit">Upload template</button>
+                </form>
+            </section>
+        </div>
     </div>
-  </div>
+
+</div>
 
   <!-- Remake File Modal -->
     <div id="remakeFileModal" class="modal">

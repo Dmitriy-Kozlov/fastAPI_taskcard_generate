@@ -421,7 +421,7 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
                 document.getElementById('login-success').style.display = 'block';
                 this.reset();
                 localStorage.setItem('authToken', data.access_token);
-                window.location.href = '/pages/search';
+                window.location.href = '/pages/generate_taskcards';
             } else {
                 showPopup('Bad credentials');
                 console.error('Login failed:', data);

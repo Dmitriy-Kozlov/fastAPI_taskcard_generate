@@ -72,7 +72,11 @@ function airlinesTable() {
                     body: JSON.stringify({ airline: name })
                 });
 
-                if (!response.ok) throw new Error('Failed to create airline');
+                if (!response.ok) {
+                const err = await response.json();
+                showToast(`Failed to create airline ${err.detail || response.statusText}`);
+                return;
+                }
 
                 showToast('Airline created successfully');
                 form.reset();
@@ -101,9 +105,11 @@ async function deleteAirline(airlineId) {
             }
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to delete airline');
-        }
+                if (!response.ok) {
+                const err = await response.json();
+                showToast(`Failed to delete airline ${err.detail || response.statusText}`);
+                return;
+                }
 
         await fetchAirlines(); // Refresh the table
         await loadSelects();
@@ -180,7 +186,11 @@ function aircraftTypesTable() {
                     body: JSON.stringify({ aircraft_type: name })
                 });
 
-                if (!response.ok) throw new Error('Failed to create aircraft type');
+                if (!response.ok) {
+                    const err = await response.json();
+                    showToast(`Failed to create aircraft type ${err.detail || response.statusText}`);
+                    return;
+                }
 
                 showToast('Aircraft type created successfully');
                 aircraftTypesForm.reset();
@@ -213,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById(targetTab).classList.add('active');
 
        if (button.dataset.tab === 'tab3') {
-            aircraftTableBody.innerHTML = '<tr><td colspan="3">Выберите авиакомпанию</td></tr>';
+            aircraftTableBody.innerHTML = '<tr><td colspan="3">Select airline</td></tr>';
             airlineSelect.value = '';
         }
     });
@@ -235,9 +245,11 @@ async function deleteAircraftType(aircraftTypeId) {
             }
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to delete aircraft type');
-        }
+            if (!response.ok) {
+                const err = await response.json();
+                showToast(`Failed to delete aircraft type ${err.detail || response.statusText}`);
+                return;
+            }
 
         await fetchAircraftTypes(); // Refresh the table
         showToast('Aircraft type deleted successfully');
@@ -283,7 +295,7 @@ async function deleteAircraftType(aircraftTypeId) {
             const types = await typeRes.json();
 
             [airlineSelect, newAirlineSelect].forEach(select => {
-                select.innerHTML = '<option value="">-- Выберите --</option>';
+                select.innerHTML = '<option value="">-- Select --</option>';
                 airlines.forEach(airline => {
                     const opt = document.createElement('option');
                     opt.value = airline.id;
@@ -292,7 +304,7 @@ async function deleteAircraftType(aircraftTypeId) {
                 });
             });
 
-            aircraftTypeSelect.innerHTML = '<option value="">-- Выберите тип --</option>';
+            aircraftTypeSelect.innerHTML = '<option value="">-- Select type --</option>';
             types.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
@@ -313,7 +325,7 @@ async function deleteAircraftType(aircraftTypeId) {
         templateInfo.style.display = 'none';
 
         if (!id) {
-            tableBody.innerHTML = `<tr><td colspan="3">Выберите авиакомпанию</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="3">Select airline</td></tr>`;
             return;
         }
 
@@ -332,21 +344,21 @@ async function deleteAircraftType(aircraftTypeId) {
                     row.innerHTML = `
                         <td>${ac.registration_no}</td>
                         <td>${ac.aircraft_type.aircraft_type}</td>
-                        <td><button class="btn-delete" onclick="deleteAircraft(${ac.id}, ${id})">Удалить</button></td>
+                        <td><button class="btn-delete" onclick="deleteAircraft(${ac.id}, ${id})">Delete</button></td>
                     `;
                     tableBody.appendChild(row);
                 });
             } else {
-                tableBody.innerHTML = `<tr><td colspan="3">Нет самолётов</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="3">No aircrafts found</td></tr>`;
             }
 
             if (data.template) {
-                templateInfo.innerHTML = `<strong>Шаблон:</strong> ${data.template.filename || 'Без имени'}`;
+                templateInfo.innerHTML = `<strong>Template:</strong> ${data.template.filename || 'Noname'}`;
                 templateInfo.style.display = 'block';
             }
         } catch (err) {
             console.error('Ошибка при получении данных:', err);
-            tableBody.innerHTML = `<tr><td colspan="3">Ошибка загрузки</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="3">Download error</td></tr>`;
         }
     });
 
@@ -395,7 +407,7 @@ async function deleteAircraftType(aircraftTypeId) {
 
 // --- Удаление самолёта (глобальная функция) ---
 async function deleteAircraft(id, airline_id) {
-    if (!confirm('Удалить самолёт?')) return;
+    if (!confirm('Delete aircraft?')) return;
     try {
         const res = await fetch(`/fleet/aircraft/${id}/delete`,
         { method: 'DELETE',
@@ -440,7 +452,7 @@ async function deleteAircraft(id, airline_id) {
         afiles = await response.json();
         airbusFilesBody.innerHTML = '';
         if (!afiles.length) {
-            airbusFilesBody.innerHTML = '<tr><td colspan="5">Нет данных</td></tr>';
+            airbusFilesBody.innerHTML = '<tr><td colspan="5">No data</td></tr>';
             return;
         }
         afiles.sort((a, b) => a.id - b.id);
@@ -519,7 +531,7 @@ function closeFileModal() {
 
 
 function openRemakeFileModal() {
-remakeAircraftTypeSelect.innerHTML = '<option value="">-- Выберите тип --</option>';
+remakeAircraftTypeSelect.innerHTML = '<option value="">-- Select type --</option>';
             aircraftTypes.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
@@ -554,7 +566,7 @@ remakeFileForm.addEventListener('submit', async (e) => {
                 showToast(`Failed to remake files ${err.detail || response.statusText}`);
             }
         } catch (err) {
-            console.error('Filed to remake files:', err);
+            console.error('Failed to remake files:', err);
         } finally {
         // скрыть спинер
         remakeBtn.disabled = false;
@@ -607,7 +619,7 @@ function closeTemplateModal() {
         });
 
         // Авиакомпании
-        filesAirlineSelect.innerHTML = '<option value="">Авиакомпания</option>';
+        filesAirlineSelect.innerHTML = '<option value="">Airline</option>';
         airlines.forEach(a => {
             const option = document.createElement('option');
             option.value = a.id;
@@ -632,11 +644,12 @@ function closeTemplateModal() {
         });
 
         if (res.ok) {
-            showToast('Файл Airbus успешно добавлен');
+            showToast('Airbus file is added');
             airbusForm.reset();
             loadAirbusFiles();
         } else {
-            showToast('Ошибка при добавлении файла Airbus');
+            const err = await response.json();
+            showToast(`Airbus file add error: ${err.detail || response.statusText}`);
         }
     });
 
@@ -655,11 +668,12 @@ function closeTemplateModal() {
         });
 
         if (res.ok) {
-            showToast('Шаблон успешно добавлен');
+            showToast('Template is added');
             templateForm.reset();
             loadTemplates();
         } else {
-            showToast('Ошибка при добавлении шаблона');
+            const err = await response.json();
+            showToast(`Template add error: ${err.detail || response.statusText}`);
         }
     });
 
@@ -689,10 +703,11 @@ document.getElementById('editFileForm').addEventListener('submit', async functio
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            console.log(response.status)
-            throw new Error(`${errorData.detail}`);
+            const err = await response.json();
+            showToast(`Edit file error: ${err.detail || response.statusText}`);
+            return;
         }
+
         if (response.status === 401) {
             localStorage.removeItem("authToken");
             window.location.href='/pages/auth';
@@ -723,7 +738,9 @@ async function deleteFile(fileId) {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to delete file');
+            const err = await response.json();
+            showToast(`File deleting ferror: ${err.detail || response.statusText}`);
+            return;
         }
 
         await loadAirbusFiles(); // Refresh the table
@@ -760,9 +777,9 @@ document.getElementById('editTemplateForm').addEventListener('submit', async fun
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            console.log(response.status)
-            throw new Error(`${errorData.detail}`);
+            const err = await response.json();
+            showToast(`Edit template error: ${err.detail || response.statusText}`);
+            return;
         }
         if (response.status === 401) {
             localStorage.removeItem("authToken");
@@ -794,7 +811,9 @@ async function deleteTemplate(templateId) {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to delete template');
+            const err = await response.json();
+            showToast(`Template deleting error: ${err.detail || response.statusText}`);
+            return;
         }
 
         await loadTemplates(); // Refresh the table

@@ -7,9 +7,9 @@ router = APIRouter(prefix='/pages', tags=['Фронтенд'])
 templates = Jinja2Templates(directory='templates')
 
 
-@router.get('/search')
-async def get_search_html(request: Request):
-    return templates.TemplateResponse(name='search.html', context={'request': request})
+# @router.get('/search')
+# async def get_search_html(request: Request):
+#     return templates.TemplateResponse(name='search.html', context={'request': request})
 
 
 @router.get('/auth')
@@ -17,10 +17,10 @@ async def get_auth_html(request: Request):
     return templates.TemplateResponse(name='auth.html', context={'request': request})
 
 
-@router.get('/add')
-async def get_add_html(request: Request):
-    return templates.TemplateResponse(name='add.html', context={'request': request})
-
+# @router.get('/add')
+# async def get_add_html(request: Request):
+#     return templates.TemplateResponse(name='add.html', context={'request': request})
+#
 
 @router.get('/users')
 async def get_users_html(request: Request):
@@ -30,3 +30,8 @@ async def get_users_html(request: Request):
 @router.get('/airlines')
 async def get_airlines_html(request: Request):
     return templates.TemplateResponse(name='airlines.html', context={'request': request})
+
+
+@router.get('/generate_taskcards')
+async def get_generate_taskcards_html(request: Request):
+    return templates.TemplateResponse(name='generate_taskcards.html', context={'request': request})
