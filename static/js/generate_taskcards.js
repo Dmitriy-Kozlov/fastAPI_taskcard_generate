@@ -125,6 +125,7 @@ generateTaskcardsForm.addEventListener('submit', async (e) => {
                         row.innerHTML = `
                             <td><span class="status-badge status-enabled">Created</span></td>
                             <td>${data["created taskcards"].join(', ')}</td>
+                            <td>${data["created taskcards"].length}</td>
                         `;
                         resultsTableBody.appendChild(row);
                     }
@@ -134,6 +135,7 @@ generateTaskcardsForm.addEventListener('submit', async (e) => {
                         row.innerHTML = `
                             <td><span class="status-badge status-disabled">Not Found</span></td>
                             <td>${data["no taskcard found"].join(', ')}</td>
+                            <td>${data["no taskcard found"].length}</td>
                         `;
                         resultsTableBody.appendChild(row);
                     }

@@ -579,7 +579,7 @@ def generate_taskcards(aircraft_type, aircraft, mpd_tasks_list, airline_template
     return mpd_lost, mpd_create, files
 
 
-def generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id):
+def generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id, user_full_name):
     with open(f"{SOURCE_PATH}/{atype}_merged_result.json", "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -637,6 +637,7 @@ def generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id):
             "tools": tools,
             "materials": materials,
             "acreg":  aircraft,
+            "username": user_full_name,
         }
 
         # Динамические замены для STANDARDTOOL_KEYWORD

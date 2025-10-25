@@ -68,7 +68,7 @@ async def generate(data: AircraftInNew, user = Depends(get_current_active_user))
         )
     template_id = new_airline.template.id
 
-    lost, create, files = generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id)
+    lost, create, files = generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id, user.full_name)
     zip_name = f"taskcards_{uuid.uuid4().hex}.zip"
     zip_path = zip_files(files, zip_name)
     response = {"created taskcards": create,
