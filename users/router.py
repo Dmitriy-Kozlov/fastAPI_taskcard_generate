@@ -42,7 +42,7 @@ async def login(username: str = Body(...), password: str = Body(...)):
 
 
 @router.get("/all", response_model=list[UserRead])
-async def get_all_users(user=Depends(get_current_active_user)):
+async def get_all_users(user=Depends(get_current_active_admin)):
     users = await UserCRUD.find_all()
     return [UserRead.from_orm(user) for user in users]
 

@@ -36,7 +36,7 @@ async def get_all_airlines(user=Depends(get_current_active_user)):
             response_model=AirlineWithAircraftsAndTemplate
             )
 # @router.get("/airlines/{airline_id}")
-async def find_airline_with_aircrafts_and_template(airline_id: int):
+async def find_airline_with_aircrafts_and_template(airline_id: int, user=Depends(get_current_active_user)):
     airline = await AirlineCRUD.find_airline_with_aircrafts_and_template(airline_id)
     return airline
 
