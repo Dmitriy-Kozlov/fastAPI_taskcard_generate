@@ -18,20 +18,20 @@ services:
       - .:/app
 #      - ./migrations:/app/migrations
 #      - mediafiles:/app/media
-#    networks:
-#      - webnet
+    networks:
+      - webnet
 
   db:
     image: postgres
     environment:
       - POSTGRES_PASSWORD=admin
       - POSTGRES_DB=postgres
-#    volumes:
-#      - pgdata:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
-#    networks:
-#      - webnet
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+#    ports:
+#      - 5432:5432
+    networks:
+      - webnet
 
   nginx:
     image: nginx:stable-alpine
@@ -43,13 +43,13 @@ services:
       - './static:/app/static'
     depends_on:
       - fastapi
-#    networks:
-#      - webnet
+    networks:
+      - webnet
 
-#networks:
-#  webnet:
+networks:
+  webnet:
 #
-#volumes:
-#  pgdata:
+volumes:
+  pgdata:
 #  mediafiles:
 
