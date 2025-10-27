@@ -1,9 +1,9 @@
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 
 from schemas import AircraftIn, AircraftInNew
@@ -125,4 +125,6 @@ def download_file(filename: str,  user = Depends(get_current_active_user)):
     return FileResponse(path=zip_path, filename="Taskcards.zip", media_type="application/zip")
 
 
-
+@app.get("/")
+async def home():
+    return RedirectResponse("/pages/auth", status_code=status.HTTP_301_MOVED_PERMANENTLY)
