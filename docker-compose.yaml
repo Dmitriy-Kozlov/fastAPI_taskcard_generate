@@ -22,7 +22,7 @@ services:
       - webnet
 
   db:
-    image: postgres
+    image: postgres:17
     environment:
       - POSTGRES_PASSWORD=admin
       - POSTGRES_DB=postgres
