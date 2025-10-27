@@ -648,8 +648,8 @@ function closeTemplateModal() {
             airbusForm.reset();
             loadAirbusFiles();
         } else {
-            const err = await response.json();
-            showToast(`Airbus file add error: ${err.detail || response.statusText}`);
+            const err = await res.json();
+            showToast(`Airbus file add error: ${err.detail || res.statusText}`);
         }
     });
 
@@ -672,8 +672,8 @@ function closeTemplateModal() {
             templateForm.reset();
             loadTemplates();
         } else {
-            const err = await response.json();
-            showToast(`Template add error: ${err.detail || response.statusText}`);
+            const err = await res.json();
+            showToast(`Template add error: ${err.detail || res.statusText}`);
         }
     });
 
