@@ -6,6 +6,7 @@ from datetime import datetime
 
 
 def zip_files(file_paths: List[str], zip_name: str) -> str:
+    os.makedirs("generated", exist_ok=True)
     zip_path = os.path.join("generated", zip_name)
     with zipfile.ZipFile(zip_path, 'w') as zipf:
         for file in file_paths:
