@@ -32,23 +32,42 @@ def remake_files_task(self, atype: int, mpd_file: str, ipc_file: str, amm_file: 
         # Завершено
         return {"status": "completed", "percent": 100}
 
+from celery.exceptions import Ignore
+from celery import states
+
 
 @celery_app.task(bind=True, name="generate_taskcards_task")
 def generate_taskcards_task(self, atype: int, aircraft:str, mpd_tasks_list: list, template_id: int, full_name: str):
     """
     Фоновая асинхронная генерация taskcards.
     """
+    try:
+        self.update_state(state="PROGRESS", meta={"percent": 40, "step": "Generating taskcards"})
+        lost, create, files = generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id, full_name)
 
-    self.update_state(state="PROGRESS", meta={"percent": 40, "status": "Generating taskcards"})
-    lost, create, files = generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id, full_name)
+        self.update_state(state="PROGRESS", meta={"percent": 80, "step": "Zipping results"})
+        zip_name = f"taskcards_{uuid.uuid4().hex}.zip"
+        zip_path = zip_files(files, zip_name)
 
-    self.update_state(state="PROGRESS", meta={"percent": 80, "status": "Zipping results"})
-    zip_name = f"taskcards_{uuid.uuid4().hex}.zip"
-    zip_path = zip_files(files, zip_name)
-
-    return {
-        "created taskcards": create,
-        "no taskcard found": lost,
-        "download_url": f"/download/{zip_name}"
-    }
+        return {
+            "created taskcards": create,
+            "no taskcard found": lost,
+            "download_url": f"/download/{zip_name}"
+        }
+    except FileNotFoundError as e:
+    # Обновляем состояние задачи в Redis, чтобы фронтенд мог показать сообщение
+        self.update_state(
+            state="PROGRESS",
+            meta={"error": str(e), "step": "File not found", "percent": 0}
+        )
+        # Возбуждаем снова — Celery отметит задачу как failed
+        raise Ignore()
+    #
+    # except Exception as e:
+    #     # Логируем и обновляем статус
+    #     self.update_state(
+    #         state="FAILURE",
+    #         meta={"error": str(e), "step": "Unexpected error", "percent": 0}
+    #     )
+    #     raise Ignore()
 

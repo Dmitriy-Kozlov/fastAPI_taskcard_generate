@@ -115,7 +115,7 @@ generateTaskcardsForm.addEventListener('submit', async (e) => {
 
             const data = await response.json();
             if (!response.ok) {
-            showToast(`Failed to generate taskcards: ${data.detail || response.statusText}`, true);
+            showToast(`Failed to generate taskcards: ${data.detail || response.statusText}`);
             return;
         }
             if (data.task_id) {
@@ -123,96 +123,14 @@ generateTaskcardsForm.addEventListener('submit', async (e) => {
             }
 
 
-//                if (response.ok) {
-//                showToast('Taskcards generated successfully');
                 generateTaskcardsForm.reset();
                 console.log(data)
 
-//                const data = await response.json();
-
-//                    if (data["created taskcards"] && data["created taskcards"].length > 0) {
-//                        const row = document.createElement('tr');
-//                        row.innerHTML = `
-//                            <td><span class="status-badge status-enabled">Created</span></td>
-//                            <td>${data["created taskcards"].join(', ')}</td>
-//                            <td>${data["created taskcards"].length}</td>
-//                        `;
-//                        resultsTableBody.appendChild(row);
-//                    }
-//
-//                    if (data["no taskcard found"] && data["no taskcard found"].length > 0) {
-//                        const row = document.createElement('tr');
-//                        row.innerHTML = `
-//                            <td><span class="status-badge status-disabled">Not Found</span></td>
-//                            <td>${data["no taskcard found"].join(', ')}</td>
-//                            <td>${data["no taskcard found"].length}</td>
-//                        `;
-//                        resultsTableBody.appendChild(row);
-//                    }
-//
-//                   if (data["download_url"]) {
-//                    const row = document.createElement('tr');
-//                    row.innerHTML = `
-//                        <td colspan="2" style="text-align:center;">
-//                            <button id="downloadZipBtn" class="btn-primary">⬇️ Скачать ZIP-файл</button>
-//                        </td>
-//                    `;
-//                    resultsTableBody.appendChild(row);
-//
-//
-//
-//
-//                    const downloadBtn = document.getElementById('downloadZipBtn');
-//                    downloadBtn.addEventListener('click', async () => {
-//                        try {
-//                            downloadBtn.disabled = true;
-//                            downloadBtn.textContent = 'Download...';
-//
-//                            const response = await fetch(data["download_url"], {
-//                                method: 'GET',
-//                                headers: {
-//                                    'Authorization': `Bearer ${authToken}`
-//                                }
-//                            });
-//
-//                            if (!response.ok) {
-//                                throw new Error(`Ошибка при загрузке файла: ${response.status}`);
-//                            }
-//
-//                            const blob = await response.blob();
-//                            const url = window.URL.createObjectURL(blob);
-//                            const a = document.createElement('a');
-//                            a.href = url;
-//                            a.download = 'taskcards.zip';
-//                            document.body.appendChild(a);
-//                            a.click();
-//                            a.remove();
-//                            window.URL.revokeObjectURL(url);
-//
-//                            downloadBtn.textContent = '✅ Downloaded';
-//                        } catch (err) {
-//                            console.error(err);
-//                            alert(`Ошибка: ${err.message}`);
-//                            downloadBtn.textContent = 'Error';
-//                        } finally {
-//                            downloadBtn.disabled = false;
-//                        }
-//                    });
-//                    }
-//             else {
-//                const err = await response.json();
-//                showToast(`Failed to generate taskcards: ${err.detail || response.statusText}`);
-////                alert('Ошибка: ' + (err.detail || response.statusText));
-//            }
-
-//    };
     }  catch (err) {
                                 console.error(err);
                                 alert(`Ошибка: ${err.message}`);
-                            }   finally {
-                                     generateBtn.disabled = false;
-                                        generateBtn.textContent = 'Generate';
-                             }
+                            }
+
                                 });
 
 
@@ -232,6 +150,8 @@ async function pollStatus(task_id) {
       clearInterval(interval);
       const meta = data.meta;
       showToast('Taskcards generated successfully');
+       generateBtn.disabled = false;
+        generateBtn.textContent = 'Generate';
 //      updateProgressBar(100);
 //      alert("✅ Task completed successfully!");
 
@@ -260,7 +180,7 @@ async function pollStatus(task_id) {
                    if (meta["download_url"]) {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td colspan="2" style="text-align:center;">
+                        <td colspan="3" style="text-align:center;">
                             <button id="downloadZipBtn" class="btn-primary">⬇️ Скачать ZIP-файл</button>
                         </td>
                     `;
@@ -315,7 +235,10 @@ async function pollStatus(task_id) {
     }}
     if (data.state === "FAILURE") {
       clearInterval(interval);
-      alert("❌ Task failed: " + data.meta);
+//      alert("❌ Task failed: " + data.meta);
+    showToast('❌ Task failed:' + data.meta.error);
+       generateBtn.disabled = false;
+    generateBtn.textContent = 'Generate';
     }
   }, 3000);
 }

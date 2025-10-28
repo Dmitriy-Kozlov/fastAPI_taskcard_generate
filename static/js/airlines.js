@@ -589,13 +589,15 @@ remakeFileForm.addEventListener('submit', async (e) => {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
             });
 
-            const {task_id} = await response.json();
-            pollStatus(task_id)
+//            const {task_id} = await response.json();
+//            pollStatus(task_id)
 
             if (response.ok) {
                 showToast('Remake files in progress...');
                 remakeFileModal.style.display = 'none';
                 remakeFileForm.reset();
+                const {task_id} = await response.json();
+                pollStatus(task_id)
             } else {
                 const err = await response.json();
                 showToast(`Failed to remake files ${err.detail || response.statusText}`);

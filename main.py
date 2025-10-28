@@ -9,7 +9,7 @@ from starlette.staticfiles import StaticFiles
 from schemas import AircraftIn, AircraftInNew
 import os
 
-from generate_taskcards import generate_taskcards, generate_taskcards_new
+from generate_taskcards import generate_taskcards_new
 from fleet import all_airlines
 from users.schemas import UserCreate
 from utils import zip_files
@@ -89,7 +89,7 @@ async def get_task_status(task_id: str):
     elif task.state == "PROGRESS":
         return {"state": "PROGRESS", "meta": task.info}
     elif task.state == "SUCCESS":
-        return {"state": "SUCCESS", "meta": task.info}  # <-- вот тут будет твой словарь с created/no/URL
+        return {"state": "SUCCESS", "meta": task.info}
     elif task.state == "FAILURE":
         return {"state": "FAILURE", "meta": {"error": str(task.info)}}
 
@@ -127,44 +127,44 @@ async def get_task_status(task_id: str):
 #
 #     return response
 
-@app.post("/generate-taskcards")
-async def generate(data: AircraftIn,  user = Depends(get_current_active_user)):
-    mpd_tasks_list = data.taskcards
-    aircraft = data.registration
-    current_airline = data.airline
-    # Проверка: существует ли авиакомпания
-    new_airlines = await AirlineCRUD.get_all_airlines_dict()
-    # if current_airline not in all_airlines:
-    if current_airline not in new_airlines:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown airline: '{current_airline}'"
-        )
-    # template_airline_file_id = TemplateFileCRUD.get_template_for_airline()
-    # Проверка: существует ли ВС в списке у этой авиакомпании
-    # if aircraft not in all_airlines[current_airline]:
-    if aircraft not in new_airlines[current_airline]:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Aircraft '{aircraft}' not found for airline '{current_airline}'"
-        )
-
-    # aircraft_type = all_airlines[current_airline][aircraft]["type"]
-    aircraft_type = new_airlines[current_airline][aircraft]["type"]
-    # subtype = all_airlines[current_airline][aircraft]["subtype"]
-    try:
-        subtype = new_airlines[current_airline][aircraft]["subtype"]
-    except KeyError:
-        subtype = ""
-    print(current_airline, aircraft, aircraft_type, subtype)
-    lost, create, files = generate_taskcards(aircraft_type, aircraft, mpd_tasks_list, current_airline, subtype)
-    zip_name = f"taskcards_{uuid.uuid4().hex}.zip"
-    zip_path = zip_files(files, zip_name)
-    response = {"created taskcards": create,
-                "no taskcard found": lost,
-                "download_url": f"/download/{zip_name}"}
-
-    return response
+# @app.post("/generate-taskcards")
+# async def generate(data: AircraftIn,  user = Depends(get_current_active_user)):
+#     mpd_tasks_list = data.taskcards
+#     aircraft = data.registration
+#     current_airline = data.airline
+#     # Проверка: существует ли авиакомпания
+#     new_airlines = await AirlineCRUD.get_all_airlines_dict()
+#     # if current_airline not in all_airlines:
+#     if current_airline not in new_airlines:
+#         raise HTTPException(
+#             status_code=400,
+#             detail=f"Unknown airline: '{current_airline}'"
+#         )
+#     # template_airline_file_id = TemplateFileCRUD.get_template_for_airline()
+#     # Проверка: существует ли ВС в списке у этой авиакомпании
+#     # if aircraft not in all_airlines[current_airline]:
+#     if aircraft not in new_airlines[current_airline]:
+#         raise HTTPException(
+#             status_code=400,
+#             detail=f"Aircraft '{aircraft}' not found for airline '{current_airline}'"
+#         )
+#
+#     # aircraft_type = all_airlines[current_airline][aircraft]["type"]
+#     aircraft_type = new_airlines[current_airline][aircraft]["type"]
+#     # subtype = all_airlines[current_airline][aircraft]["subtype"]
+#     try:
+#         subtype = new_airlines[current_airline][aircraft]["subtype"]
+#     except KeyError:
+#         subtype = ""
+#     print(current_airline, aircraft, aircraft_type, subtype)
+#     lost, create, files = generate_taskcards(aircraft_type, aircraft, mpd_tasks_list, current_airline, subtype)
+#     zip_name = f"taskcards_{uuid.uuid4().hex}.zip"
+#     zip_path = zip_files(files, zip_name)
+#     response = {"created taskcards": create,
+#                 "no taskcard found": lost,
+#                 "download_url": f"/download/{zip_name}"}
+#
+#     return response
 
 
 @app.get("/download/{filename}")
