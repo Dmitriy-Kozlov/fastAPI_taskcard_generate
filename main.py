@@ -20,6 +20,8 @@ from all_fleet.router import router as fleet_router
 from airbus_data.router import router as airbus_data_router
 from users.crud import get_current_active_user, get_current_active_admin
 from pages.router import router as pages_router
+from tasks import generate_taskcards_task
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -67,15 +69,63 @@ async def generate(data: AircraftInNew, user = Depends(get_current_active_user))
             detail=f"No active template for airline '{airline_name}'"
         )
     template_id = new_airline.template.id
+    """
+    Отправляем задачу в Celery и возвращаем task_id
+    """
+    task = generate_taskcards_task.delay(atype, aircraft, mpd_tasks_list, template_id,  user.full_name)
+    return {"task_id": task.id}
 
-    lost, create, files = generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id, user.full_name)
-    zip_name = f"taskcards_{uuid.uuid4().hex}.zip"
-    zip_path = zip_files(files, zip_name)
-    response = {"created taskcards": create,
-                "no taskcard found": lost,
-                "download_url": f"/download/{zip_name}"}
 
-    return response
+from celery_app import celery_app
+from celery.result import AsyncResult
+
+@app.get("/tasks/{task_id}/status")
+async def get_task_status(task_id: str):
+    task = AsyncResult(task_id, app=celery_app)
+    print(task.info)
+
+    if task.state == "PENDING":
+        return {"state": "PENDING", "meta": {}}
+    elif task.state == "PROGRESS":
+        return {"state": "PROGRESS", "meta": task.info}
+    elif task.state == "SUCCESS":
+        return {"state": "SUCCESS", "meta": task.info}  # <-- вот тут будет твой словарь с created/no/URL
+    elif task.state == "FAILURE":
+        return {"state": "FAILURE", "meta": {"error": str(task.info)}}
+
+    return {"state": task.state, "meta": task.info}
+
+
+# @app.post("/generate-taskcards_new")
+# async def generate(data: AircraftInNew, user = Depends(get_current_active_user)):
+#     mpd_tasks_list = data.taskcards
+#     aircraft = data.registration
+#     current_airline_id = data.airline
+#     new_airline = await AirlineCRUD.find_airline_with_aircrafts_and_template(current_airline_id)
+#     airline_name = new_airline.airline
+#     if not any(ac.registration_no == aircraft for ac in (new_airline.aircrafts or [])):
+#         raise HTTPException(
+#             status_code=400,
+#             detail=f"Aircraft '{aircraft}' not found for airline '{airline_name}'"
+#         )
+#     atype = next((ac.aircraft_type.aircraft_type
+#                   for ac in (new_airline.aircrafts or [])
+#                   if ac.registration_no == aircraft), None)
+#     if not new_airline.template:
+#         raise HTTPException(
+#             status_code=400,
+#             detail=f"No active template for airline '{airline_name}'"
+#         )
+#     template_id = new_airline.template.id
+#
+#     lost, create, files = generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id, user.full_name)
+#     zip_name = f"taskcards_{uuid.uuid4().hex}.zip"
+#     zip_path = zip_files(files, zip_name)
+#     response = {"created taskcards": create,
+#                 "no taskcard found": lost,
+#                 "download_url": f"/download/{zip_name}"}
+#
+#     return response
 
 @app.post("/generate-taskcards")
 async def generate(data: AircraftIn,  user = Depends(get_current_active_user)):

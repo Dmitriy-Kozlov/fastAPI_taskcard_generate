@@ -105,7 +105,34 @@ async def delete_template_by_id(id: int,
     return result
 
 
-@router.post("/remake_files", response_model=list[AirbusFileRead])
-async def remake_files_after_upload(atype: int,  user = Depends(get_current_active_admin)):
-    result = await AirbusFileCRUD.get_amm_ipc_mpd_files(atype)
-    return result
+# @router.post("/remake_files", response_model=list[AirbusFileRead])
+# async def remake_files_after_upload(atype: int,  user = Depends(get_current_active_admin)):
+#     result = await AirbusFileCRUD.get_amm_ipc_mpd_files(atype)
+#     return result
+
+
+# from tasks import remake_files_task
+# from celery.result import AsyncResult
+from celery_app import celery_app
+
+@router.post("/remake_files")
+async def remake_files_endpoint(atype: int,  user = Depends(get_current_active_admin)):
+    # создаём задачу в фоне
+    # task = remake_files_task.delay(atype)
+    task_id = await AirbusFileCRUD.get_amm_ipc_mpd_files(atype)
+    return {"task_id": task_id}
+
+
+@router.get("/task_status/{task_id}/status")
+async def get_task_status(task_id: str, user=Depends(get_current_active_admin)):
+    task = celery_app.AsyncResult(task_id)
+    print(task.state)
+    if task.state == "PENDING":
+        return {"state": "PENDING", "meta": {}}
+    elif task.state == "PROGRESS":
+        return {"state": "PROGRESS", "meta": task.info}
+    elif task.state == "SUCCESS":
+        return {"state": "SUCCESS", "meta": task.info}
+    elif task.state == "FAILURE":
+        return {"state": "FAILURE", "meta": str(task.info)}
+    return {"state": task.state, "meta": task.info}

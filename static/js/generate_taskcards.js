@@ -113,34 +113,151 @@ generateTaskcardsForm.addEventListener('submit', async (e) => {
                  })
             });
 
+            const data = await response.json();
+            if (!response.ok) {
+            showToast(`Failed to generate taskcards: ${data.detail || response.statusText}`, true);
+            return;
+        }
+            if (data.task_id) {
+                pollStatus(data.task_id); // отслеживание прогресса
+            }
 
-                if (response.ok) {
-                showToast('Taskcards generated successfully');
+
+//                if (response.ok) {
+//                showToast('Taskcards generated successfully');
                 generateTaskcardsForm.reset();
+                console.log(data)
 
-                const data = await response.json();
+//                const data = await response.json();
 
-                    if (data["created taskcards"] && data["created taskcards"].length > 0) {
+//                    if (data["created taskcards"] && data["created taskcards"].length > 0) {
+//                        const row = document.createElement('tr');
+//                        row.innerHTML = `
+//                            <td><span class="status-badge status-enabled">Created</span></td>
+//                            <td>${data["created taskcards"].join(', ')}</td>
+//                            <td>${data["created taskcards"].length}</td>
+//                        `;
+//                        resultsTableBody.appendChild(row);
+//                    }
+//
+//                    if (data["no taskcard found"] && data["no taskcard found"].length > 0) {
+//                        const row = document.createElement('tr');
+//                        row.innerHTML = `
+//                            <td><span class="status-badge status-disabled">Not Found</span></td>
+//                            <td>${data["no taskcard found"].join(', ')}</td>
+//                            <td>${data["no taskcard found"].length}</td>
+//                        `;
+//                        resultsTableBody.appendChild(row);
+//                    }
+//
+//                   if (data["download_url"]) {
+//                    const row = document.createElement('tr');
+//                    row.innerHTML = `
+//                        <td colspan="2" style="text-align:center;">
+//                            <button id="downloadZipBtn" class="btn-primary">⬇️ Скачать ZIP-файл</button>
+//                        </td>
+//                    `;
+//                    resultsTableBody.appendChild(row);
+//
+//
+//
+//
+//                    const downloadBtn = document.getElementById('downloadZipBtn');
+//                    downloadBtn.addEventListener('click', async () => {
+//                        try {
+//                            downloadBtn.disabled = true;
+//                            downloadBtn.textContent = 'Download...';
+//
+//                            const response = await fetch(data["download_url"], {
+//                                method: 'GET',
+//                                headers: {
+//                                    'Authorization': `Bearer ${authToken}`
+//                                }
+//                            });
+//
+//                            if (!response.ok) {
+//                                throw new Error(`Ошибка при загрузке файла: ${response.status}`);
+//                            }
+//
+//                            const blob = await response.blob();
+//                            const url = window.URL.createObjectURL(blob);
+//                            const a = document.createElement('a');
+//                            a.href = url;
+//                            a.download = 'taskcards.zip';
+//                            document.body.appendChild(a);
+//                            a.click();
+//                            a.remove();
+//                            window.URL.revokeObjectURL(url);
+//
+//                            downloadBtn.textContent = '✅ Downloaded';
+//                        } catch (err) {
+//                            console.error(err);
+//                            alert(`Ошибка: ${err.message}`);
+//                            downloadBtn.textContent = 'Error';
+//                        } finally {
+//                            downloadBtn.disabled = false;
+//                        }
+//                    });
+//                    }
+//             else {
+//                const err = await response.json();
+//                showToast(`Failed to generate taskcards: ${err.detail || response.statusText}`);
+////                alert('Ошибка: ' + (err.detail || response.statusText));
+//            }
+
+//    };
+    }  catch (err) {
+                                console.error(err);
+                                alert(`Ошибка: ${err.message}`);
+                            }   finally {
+                                     generateBtn.disabled = false;
+                                        generateBtn.textContent = 'Generate';
+                             }
+                                });
+
+
+async function pollStatus(task_id) {
+  const interval = setInterval(async () => {
+    const res = await fetch(`/tasks/${task_id}/status`, {
+                        headers: {
+                        'Authorization': `Bearer ${authToken}`
+                        },});
+
+    const data = await res.json();
+    if (data.state === "PROGRESS") {
+      console.log(`Step: ${data.meta.step} (${data.meta.percent}%)`);
+//      updateProgressBar(data.meta.percent);
+    }
+    if (data.state === "SUCCESS") {
+      clearInterval(interval);
+      const meta = data.meta;
+      showToast('Taskcards generated successfully');
+//      updateProgressBar(100);
+//      alert("✅ Task completed successfully!");
+
+
+
+                    if (meta["created taskcards"] && meta["created taskcards"].length > 0) {
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td><span class="status-badge status-enabled">Created</span></td>
-                            <td>${data["created taskcards"].join(', ')}</td>
-                            <td>${data["created taskcards"].length}</td>
+                            <td>${meta["created taskcards"].join(', ')}</td>
+                            <td>${meta["created taskcards"].length}</td>
                         `;
                         resultsTableBody.appendChild(row);
                     }
 
-                    if (data["no taskcard found"] && data["no taskcard found"].length > 0) {
+                    if (meta["no taskcard found"] && meta["no taskcard found"].length > 0) {
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td><span class="status-badge status-disabled">Not Found</span></td>
-                            <td>${data["no taskcard found"].join(', ')}</td>
-                            <td>${data["no taskcard found"].length}</td>
+                            <td>${meta["no taskcard found"].join(', ')}</td>
+                            <td>${meta["no taskcard found"].length}</td>
                         `;
                         resultsTableBody.appendChild(row);
                     }
 
-                   if (data["download_url"]) {
+                   if (meta["download_url"]) {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td colspan="2" style="text-align:center;">
@@ -158,7 +275,7 @@ generateTaskcardsForm.addEventListener('submit', async (e) => {
                             downloadBtn.disabled = true;
                             downloadBtn.textContent = 'Download...';
 
-                            const response = await fetch(data["download_url"], {
+                            const response = await fetch(meta["download_url"], {
                                 method: 'GET',
                                 headers: {
                                     'Authorization': `Bearer ${authToken}`
@@ -191,18 +308,14 @@ generateTaskcardsForm.addEventListener('submit', async (e) => {
 
 
 
-            } else {
-                const err = await response.json();
-                showToast(`Failed to generate taskcards: ${err.detail || response.statusText}`);
-//                alert('Ошибка: ' + (err.detail || response.statusText));
-            }
 
-    };
-    }  catch (err) {
-                                console.error(err);
-                                alert(`Ошибка: ${err.message}`);
-                            }   finally {
-                                     generateBtn.disabled = false;
-                                        generateBtn.textContent = 'Generate';
-                             }
-                                });
+
+
+
+    }}
+    if (data.state === "FAILURE") {
+      clearInterval(interval);
+      alert("❌ Task failed: " + data.meta);
+    }
+  }, 3000);
+}

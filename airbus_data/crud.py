@@ -7,8 +7,8 @@ from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.future import select
 from starlette.responses import FileResponse
-
-from service import collect_from_mpd, parse_IPC, parse_tool_material_from_AMM, merge_AMM_MPD
+from tasks import remake_files_task
+# from service import collect_from_mpd, parse_IPC, parse_tool_material_from_AMM, merge_AMM_MPD
 from database import async_session_maker
 from airbus_data.models import AirbusFile, TaskTemplate
 from all_fleet.models import AircraftType
@@ -129,11 +129,12 @@ class AirbusFileCRUD(BaseCRUD):
         atype = type_result.aircraft_type
         if not mpd_id or not ipc_id or not amm_id:
             raise HTTPException(status_code=400, detail=f"Not found. {mpd_id=}, {ipc_id=}, {amm_id=}")
-        collect_from_mpd(mpd_file, atype)
-        parse_IPC(ipc_file, atype)
-        parse_tool_material_from_AMM(amm_file, atype)
-        merge_AMM_MPD(atype)
-        return plain_result
+        task = remake_files_task.delay(atype, mpd_file, ipc_file, amm_file)
+        # collect_from_mpd(mpd_file, atype)
+        # parse_IPC(ipc_file, atype)
+        # parse_tool_material_from_AMM(amm_file, atype)
+        # merge_AMM_MPD(atype)
+        return task.id
 
 
 class TemplateFileCRUD(BaseCRUD):

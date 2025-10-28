@@ -545,6 +545,38 @@ function closeRemakeFileModal() {
     document.getElementById('remakeFileModal').style.display = 'none';
 }
 
+//remakeFileForm.addEventListener('submit', async (e) => {
+//        e.preventDefault();
+//        const atype = parseInt(document.getElementById('remakeAircraftTypeSelect').value);
+//        const remakeBtn = document.getElementById('remakeBtn');
+//        try {
+//            remakeBtn.disabled = true;
+//             remakeBtn.textContent = 'Processing...';
+//            const response = await fetch(`/airbus_files/remake_files?atype=${atype}`, {
+//                method: 'POST',
+//                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+//            });
+//
+//            if (response.ok) {
+//                showToast('Remake files successfully');
+//                remakeFileModal.style.display = 'none';
+//                remakeFileForm.reset();
+//            } else {
+//                const err = await response.json();
+//                showToast(`Failed to remake files ${err.detail || response.statusText}`);
+//            }
+//        } catch (err) {
+//            console.error('Failed to remake files:', err);
+//        } finally {
+//        // скрыть спинер
+//        remakeBtn.disabled = false;
+//         remakeBtn.textContent = 'Remake files';
+//    }});
+
+
+
+
+
 remakeFileForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const atype = parseInt(document.getElementById('remakeAircraftTypeSelect').value);
@@ -557,8 +589,11 @@ remakeFileForm.addEventListener('submit', async (e) => {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
             });
 
+            const {task_id} = await response.json();
+            pollStatus(task_id)
+
             if (response.ok) {
-                showToast('Remake files successfully');
+                showToast('Remake files in progress...');
                 remakeFileModal.style.display = 'none';
                 remakeFileForm.reset();
             } else {
@@ -573,7 +608,30 @@ remakeFileForm.addEventListener('submit', async (e) => {
          remakeBtn.textContent = 'Remake files';
     }});
 
+async function pollStatus(task_id) {
+  const interval = setInterval(async () => {
+    const res = await fetch(`/airbus_files/task_status/${task_id}/status`, {
+                        headers: {
+                        'Authorization': `Bearer ${authToken}`
+                        },});
 
+    const data = await res.json();
+    if (data.state === "PROGRESS") {
+      console.log(`Step: ${data.meta.step} (${data.meta.percent}%)`);
+//      updateProgressBar(data.meta.percent);
+    }
+    if (data.state === "SUCCESS") {
+      clearInterval(interval);
+//      updateProgressBar(100);
+//      alert("✅ Task completed successfully!");
+        showToast('Remake files successfully');
+    }
+    if (data.state === "FAILURE") {
+      clearInterval(interval);
+      alert("❌ Task failed: " + data.meta);
+    }
+  }, 3000);
+}
 
 
 function openEditTemplateModal(templateId) {
