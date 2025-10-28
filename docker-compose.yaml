@@ -60,6 +60,7 @@ services:
   celery_worker:
       build: .
       container_name: celery_worker
+      mem_limit: 2g
       command: celery -A tasks worker --loglevel=INFO
       volumes:
         - .:/app
