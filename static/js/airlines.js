@@ -427,6 +427,7 @@ async function deleteAircraft(id, airline_id) {
 
     const airbusFilesBody = document.getElementById('airbusFilesBody');
     const airbusForm = document.getElementById('airbusUploadForm');
+    const airbusFileUploadBtn = document.getElementById('airbusFileUploadBtn');
     const filesAircraftTypeSelect = document.getElementById('filesAircraftTypeSelect');
 
     const templatesBody = document.getElementById('templatesBody');
@@ -670,7 +671,7 @@ function closeTemplateModal() {
 
         const [types, airlines] = await Promise.all([typesRes.json(), airlinesRes.json()]);
         // Типы ВС
-        filesAircraftTypeSelect.innerHTML = '<option value="">Тип ВС</option>';
+        filesAircraftTypeSelect.innerHTML = '<option value="">Aircraft type</option>';
         types.forEach(t => {
             const option = document.createElement('option');
             option.value = t.id;
@@ -696,7 +697,8 @@ function closeTemplateModal() {
         formData.append('aircraft_type_id', filesAircraftTypeSelect.value);
         formData.append('revision_no', document.getElementById('revisionNo').value);
         formData.append('file', document.getElementById('airbusFile').files[0]);
-
+        airbusFileUploadBtn.disabled = true;
+        airbusFileUploadBtn.textContent = 'Processing...';
         const res = await fetch('/airbus_files/add', {
             method: 'POST',
             headers: {'Authorization': `Bearer ${authToken}` },
@@ -707,6 +709,8 @@ function closeTemplateModal() {
             showToast('Airbus file is added');
             airbusForm.reset();
             loadAirbusFiles();
+            airbusFileUploadBtn.disabled = false;
+            airbusFileUploadBtn.textContent = 'Upload file';
         } else {
             const err = await res.json();
             showToast(`Airbus file add error: ${err.detail || res.statusText}`);
