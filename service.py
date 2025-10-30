@@ -135,7 +135,8 @@ def parse_IPC(ipc_file, atype):
             # Регулярка: 3 цифры (Item), пробел, part number, пробел, точка, текст (игнорируем), и в конце 3 цифры (QTY)
             item_pattern = re.findall(
                 # r'\b(\d{3})\s+([A-Z0-9\-\.]+)\s+\.\s+.*?\b(\d{3})\b',
-            r'\b(\d{3})\s+(?:Installation context\s+)?([A-Z0-9\-]+)\s+\.\s+[^0-9].*?\b(\d{3})\b',
+            # r'\b(\d{3})\s+(?:Installation context\s+)?([A-Z0-9\-]+)\s+\.\s+[^0-9].*?\b(\d{3})\b',
+            r'\b(\d{3})(?:[A-Z])?\s+(?:Installation context\s+)?([A-Z0-9\-]+)\s+\.\s+[^0-9].*?\b(\d{3})\b',
                 items_block
             )
 
