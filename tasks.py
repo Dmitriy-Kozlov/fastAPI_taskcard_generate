@@ -1,6 +1,6 @@
 from celery_app import celery_app
 # from airbus_data.crud import AirbusFileCRUD
-from service import collect_from_mpd, parse_IPC, parse_tool_material_from_AMM, merge_AMM_MPD
+from service import collect_from_mpd, parse_IPC, parse_tool_material_from_AMM, merge_AMM_MPD, add_references_to_amm
 # from airbus_data.crud import  FILES_PATH
 # from all_fleet.models import AircraftType
 # from sqlalchemy.future import select
@@ -25,6 +25,7 @@ def remake_files_task(self, atype: int, mpd_file: str, ipc_file: str, amm_file: 
 
         self.update_state(state="PROGRESS", meta={"step": "parse_tool_material_from_AMM", "percent": 75})
         parse_tool_material_from_AMM(amm_file, atype)
+        add_references_to_amm(atype)
 
         self.update_state(state="PROGRESS", meta={"step": "merge_AMM_MPD", "percent": 90})
         merge_AMM_MPD(atype)

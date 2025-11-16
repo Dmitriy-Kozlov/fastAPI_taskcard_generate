@@ -579,13 +579,19 @@ class AircraftType(Enum):
 #     return mpd_lost, mpd_create, files
 
 
-def generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id, user_full_name):
-    try:
-        with open(f"{SOURCE_PATH}/{atype}_merged_result.json", "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        raise Exception(f"File not found {SOURCE_PATH}/{atype}_merged_result.json")
-
+def generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id, user_full_name, references=True):
+    if references:
+        try:
+            with open(f"{SOURCE_PATH}/{atype}_merged_result_with_references.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            raise Exception(f"File not found {SOURCE_PATH}/{atype}_merged_result_with_references.json")
+    else:
+        try:
+            with open(f"{SOURCE_PATH}/{atype}_merged_result_from_AMM_without_references.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            raise Exception(f"File not found {SOURCE_PATH}/{atype}_merged_result_from_AMM_without_references.json")
     template_path = f"files/templates/{template_id}.docx"
     output_dir = f"{atype}_generated_docs"
     os.makedirs(output_dir, exist_ok=True)

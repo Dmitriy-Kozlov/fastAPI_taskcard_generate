@@ -153,7 +153,6 @@ def parse_IPC(ipc_file, atype):
 
 
 def parse_tool_material_from_AMM(amm_file, atype):
-
     def parse_tools_and_materials(text, tool_list, id_tool_list, material_list):
         tools = []
         result_tool_list = []
@@ -294,6 +293,7 @@ def parse_tool_material_from_AMM(amm_file, atype):
                 expendable_refs = [{"designation": designation, "ipc_number": ipc, "item": item} for
                                    designation, ipc, item in pattern]
 
+                # with open("parsed_IPC_results.json", "r", encoding="utf-8") as f:
                 with open(f"{SOURCE_PATH}/{atype}_parsed_IPC_results.json", "r", encoding="utf-8") as f:
                     ipc_data = json.load(f)
 
@@ -313,9 +313,29 @@ def parse_tool_material_from_AMM(amm_file, atype):
                                 "QTY": int(found_item["qty"])
                             })
 
-        return result_tool_list, result_material_list
+            # 1️⃣ Вырезаем нужный блок между "Referenced Information" и "Job Set-up"
+        match = re.search(
+            r"Referenced Information(.*?)Job Set-up",
+            text,
+            flags=re.DOTALL
+        )
+
+        if match:
+            referenced_block = match.group(1)
+        else:
+            referenced_block = ""
+
+        # 2️⃣ Ищем все номера тасккарт в этом блоке
+        taskcards = re.findall(
+            # r"Ref\.\s+(\d{2}-\d{2}-\d{2}-\d{3}(?:-[A-Z0-9]+)?)",
+            r"Ref\.\s+(\d{2}-\d{2}-\d{2}-\d{3}(?:-[A-Z0-9]+)*-[A-Z0-9]*)",
+            referenced_block
+        )
+
+        return result_tool_list, result_material_list, taskcards
 
     results_by_mpd = {}
+    results_by_amm = {}
 
     with open(amm_file, "r", encoding="utf-8") as f:
         for line_num, line in enumerate(f, 1):
@@ -349,8 +369,8 @@ def parse_tool_material_from_AMM(amm_file, atype):
                     keywords[kw_type].append(kw_value)
 
             mpd_key = keywords["MPDREFERENCE_KEYWORD"][0] if keywords["MPDREFERENCE_KEYWORD"] else None
-            if not mpd_key:
-                continue
+            # if not mpd_key:
+            #     continue
 
             # Получаем текст
             content_text = ""
@@ -359,9 +379,10 @@ def parse_tool_material_from_AMM(amm_file, atype):
                     content_text = c["text"]
                     break
             # Парсим таблицы из текста
-            tools_section, materials_section = parse_tools_and_materials(content_text, keywords["STANDARDTOOL_KEYWORD"],
-                                                                         keywords["TOOLIDENTIFIER_KEYWORD"],
-                                                                         keywords["MATERIALCODE_KEYWORD"])
+            tools_section, materials_section, taskcards = parse_tools_and_materials(content_text,
+                                                                                    keywords["STANDARDTOOL_KEYWORD"],
+                                                                                    keywords["TOOLIDENTIFIER_KEYWORD"],
+                                                                                    keywords["MATERIALCODE_KEYWORD"])
             # Собираем расширенные записи
             tools_detailed = []
             for name in keywords["STANDARDTOOL_KEYWORD"]:
@@ -389,8 +410,15 @@ def parse_tool_material_from_AMM(amm_file, atype):
                 if match:
                     materials_detailed.append(match)
             # Финальный результат
-            results_by_mpd[mpd_key] = {
-                "task_number": task_number,
+            if mpd_key:
+                results_by_mpd[mpd_key] = {
+                    "task_number": task_number,
+                    "references": taskcards,
+                    "description": description,
+                    "STANDARDTOOL_KEYWORD": tools_section,
+                    "MATERIALCODE_KEYWORD": materials_section
+                }
+            results_by_amm[task_number] = {
                 "description": description,
                 "STANDARDTOOL_KEYWORD": tools_section,
                 "MATERIALCODE_KEYWORD": materials_section
@@ -400,38 +428,123 @@ def parse_tool_material_from_AMM(amm_file, atype):
     with open(f"{SOURCE_PATH}/{atype}_parsed_results_from_AMM.json", "w", encoding="utf-8") as out_file:
         json.dump(results_by_mpd, out_file, indent=2, ensure_ascii=False)
 
+    with open(f"{SOURCE_PATH}/{atype}_references_from_AMM.json", "w", encoding="utf-8") as out_file:
+        json.dump(results_by_amm, out_file, indent=2, ensure_ascii=False)
+
+
+def add_references_to_amm(atype):
+    # === Загружаем оба файла ===
+    with open(f"{SOURCE_PATH}/{atype}_parsed_results_from_AMM.json", "r", encoding="utf-8") as f:
+        main_data = json.load(f)
+
+    with open(f"{SOURCE_PATH}/{atype}_references_from_AMM.json", "r", encoding="utf-8") as f:
+        refs_data = json.load(f)
+
+    # === Объединяем данные ===
+    for task_id, task_data in main_data.items():
+        references = task_data.get("references", [])
+        task_data.setdefault("STANDARDTOOL_KEYWORD", [])
+        task_data.setdefault("MATERIALCODE_KEYWORD", [])
+
+        # Если есть ссылки — проверяем каждую
+        for ref in references:
+            if ref in refs_data:
+                ref_data = refs_data[ref]
+
+                # # Добавляем STANDARDTOOL_KEYWORD
+                # if "STANDARDTOOL_KEYWORD" in ref_data:
+                #     task_data.setdefault("STANDARDTOOL_KEYWORD", [])
+                #     task_data["STANDARDTOOL_KEYWORD"].extend(ref_data["STANDARDTOOL_KEYWORD"])
+                #
+                # # Добавляем MATERIALCODE_KEYWORD
+                # if "MATERIALCODE_KEYWORD" in ref_data:
+                #     task_data.setdefault("MATERIALCODE_KEYWORD", [])
+                #     task_data["MATERIALCODE_KEYWORD"].extend(ref_data["MATERIALCODE_KEYWORD"])
+
+                # --- STANDARDTOOL_KEYWORD ---
+
+
+                for tool in ref_data.get("STANDARDTOOL_KEYWORD", []):
+                    # проверяем по REFERENCE и DESIGNATION
+                    exists = any(
+                        existing.get("REFERENCE") == tool.get("REFERENCE") and
+                        existing.get("DESIGNATION") == tool.get("DESIGNATION")
+                        for existing in task_data.setdefault("STANDARDTOOL_KEYWORD", [])
+                    )
+                    if not exists:
+                        task_data["STANDARDTOOL_KEYWORD"].append(tool)
+
+                # --- MATERIALCODE_KEYWORD ---
+                for mat in ref_data.get("MATERIALCODE_KEYWORD", []):
+
+                    # ищем совпадение по REFERENCE или DESIGNATION
+                    existing_item = None
+                    for existing in task_data.setdefault("MATERIALCODE_KEYWORD", []):
+                        if existing.get("REFERENCE") == mat.get("REFERENCE") and \
+                                existing.get("DESIGNATION") == mat.get("DESIGNATION"):
+                            existing_item = existing
+                            break
+
+                    if existing_item:
+                        # складываем QTY, если это не "AR"
+                        try:
+                            existing_qty = int(existing_item.get("QTY", 0))
+                            mat_qty = int(mat.get("QTY", 0))
+                            existing_item["QTY"] = existing_qty + mat_qty
+                        except ValueError:
+                            # если QTY не число, оставляем как есть
+                            pass
+                    else:
+                        task_data["MATERIALCODE_KEYWORD"].append(mat)
+
+    # === Сохраняем результат ===
+    with open(f"{SOURCE_PATH}/{atype}_parsed_results_from_AMM_with_references.json", "w", encoding="utf-8") as f:
+        json.dump(main_data, f, ensure_ascii=False, indent=2)
+
 
 def merge_AMM_MPD(atype):
 
-    # Загрузка первого JSON-файла (куда нужно добавить данные)
+    # Загрузка исходного JSON-файла (куда добавляем данные)
     with open(f"{SOURCE_PATH}/{atype}_mpd_data.json", "r", encoding="utf-8") as f:
         mpd_data = json.load(f)
 
-    # Загрузка второго JSON-файла (откуда берутся tools/materials)
-    with open(f"{SOURCE_PATH}/{atype}_parsed_results_from_AMM.json", "r", encoding="utf-8") as f:
-        tech_data = json.load(f)
+    # Два файла для обработки: с референсами и без
+    tech_files = [
+        (f"{SOURCE_PATH}/{atype}_parsed_results_from_AMM_with_references.json",
+         f"{SOURCE_PATH}/{atype}_merged_result_with_references.json"),
+        (f"{SOURCE_PATH}/{atype}_parsed_results_from_AMM.json",
+         f"{SOURCE_PATH}/{atype}_merged_result_from_AMM_without_references.json")
+    ]
 
-    # Объединение данных на основе первых 6 символов названия задачи
-    for mpd_task, mpd_content in mpd_data.items():
-        base_key = mpd_task[:9]
-        matched_key = None
+    for tech_file, output_file in tech_files:
 
-        # Поиск соответствия в техническом JSON
-        for tech_task in tech_data.keys():
-            if tech_task.startswith(base_key):
-                matched_key = tech_task
-                break
+        # Загружаем технический JSON
+        with open(tech_file, "r", encoding="utf-8") as f:
+            tech_data = json.load(f)
 
-        if matched_key:
-            tech_info = tech_data[matched_key]
+        # Копируем исходные данные, чтобы каждый merge был независимым
+        merged_data = {k: v.copy() for k, v in mpd_data.items()}
 
-            # Копируем ключи, если они есть
-            for key in ["task_number", "description", "STANDARDTOOL_KEYWORD", "TOOLIDENTIFIER_KEYWORD",
-                        "MATERIALCODE_KEYWORD"]:
-                if key in tech_info:
-                    mpd_content[key] = tech_info[key]
+        # Объединение данных
+        for mpd_task, mpd_content in merged_data.items():
+            base_key = mpd_task[:9]
+            matched_key = None
 
-    # Сохранение результата в новый JSON-файл
-    with open(f"{SOURCE_PATH}/{atype}_merged_result.json", "w", encoding="utf-8") as f:
-        json.dump(mpd_data, f, indent=2, ensure_ascii=False)
+            # Поиск соответствия в техническом JSON
+            for tech_task in tech_data.keys():
+                if tech_task.startswith(base_key):
+                    matched_key = tech_task
+                    break
 
+            if matched_key:
+                tech_info = tech_data[matched_key]
+
+                # Копируем ключи, если они есть
+                for key in ["task_number", "description", "STANDARDTOOL_KEYWORD", "TOOLIDENTIFIER_KEYWORD",
+                            "MATERIALCODE_KEYWORD"]:
+                    if key in tech_info:
+                        mpd_content[key] = tech_info[key]
+
+        # Сохранение результата
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(merged_data, f, indent=2, ensure_ascii=False)
