@@ -491,7 +491,7 @@ async function deleteAircraft(id, airline_id) {
             templatesBody.innerHTML = '<tr><td colspan="4">Нет данных</td></tr>';
             return;
         }
-
+        templates.sort((a, b) => a.id - b.id);
         templates.forEach(t => {
             const row = document.createElement('tr');
             row.innerHTML = `

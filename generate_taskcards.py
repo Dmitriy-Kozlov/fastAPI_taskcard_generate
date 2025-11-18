@@ -652,8 +652,7 @@ def generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id, user_fu
         # Динамические замены для STANDARDTOOL_KEYWORD
         for i, tool in enumerate(tools, start=1):
             replacements[f"STANDARDTOOL_KEYWORD_{i}"] = tool
-
-        tpl.render(replacements)
+        tpl.render(replacements, autoescape=True)
         tpl.save(f"files/templates/{atype}_temp.docx")
 
 
