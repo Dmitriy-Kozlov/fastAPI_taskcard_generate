@@ -69,10 +69,11 @@ async def generate(data: AircraftInNew, user = Depends(get_current_active_user))
             detail=f"No active template for airline '{airline_name}'"
         )
     template_id = new_airline.template.id
+    with_references = new_airline.template.reference
     """
     Отправляем задачу в Celery и возвращаем task_id
     """
-    task = generate_taskcards_task.delay(atype, aircraft, mpd_tasks_list, template_id,  user.full_name)
+    task = generate_taskcards_task.delay(atype, aircraft, mpd_tasks_list, template_id,  user.full_name, with_references)
     return {"task_id": task.id}
 
 

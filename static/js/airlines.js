@@ -504,6 +504,11 @@ async function deleteAircraft(id, airline_id) {
                     </span>
                 </td>
                 <td>
+                    <span class="status-badge ${t.reference ? 'status-enabled' : 'status-disabled'}">
+                        ${t.reference ? 'Yes' : 'No'}
+                    </span>
+                </td>
+                <td>
                 <button class="btn-edit" onclick="openEditTemplateModal(${t.id})">Edit</button>
                 <button class="btn-delete" onclick="deleteTemplate(${t.id})">Delete</button>
                 </td>
@@ -646,6 +651,7 @@ document.getElementById('templateId').value = template.id;
 document.getElementById('templateAirlineId').value = template.airline_id;
 document.getElementById('templateEditTitle').value = template.title;
 document.getElementById('templateEditStatus').checked = template.active;
+document.getElementById('templateReferenceStatus').checked = template.reference;
 
 document.getElementById('editTemplateModal').style.display = 'flex';
 }
@@ -825,6 +831,7 @@ document.getElementById('editTemplateForm').addEventListener('submit', async fun
         airline_id: document.getElementById('templateAirlineId').value,
         title: document.getElementById('templateEditTitle').value,
         active: document.getElementById('templateEditStatus').checked,
+        reference: document.getElementById('templateReferenceStatus').checked,
     };
 
     try {

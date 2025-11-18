@@ -41,11 +41,13 @@ class TemplateFileBase(BaseModel):
 class TemplateFileEdit(TemplateFileBase):
     id: int
     active: bool
+    reference:bool
 
 
 class TemplateFileRead(TemplateFileBase):
     id: int
     active: bool
+    reference:bool
     airline: AirlineBase
 
     class Config:

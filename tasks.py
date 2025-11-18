@@ -38,13 +38,13 @@ from celery import states
 
 
 @celery_app.task(bind=True, name="generate_taskcards_task")
-def generate_taskcards_task(self, atype: int, aircraft:str, mpd_tasks_list: list, template_id: int, full_name: str):
+def generate_taskcards_task(self, atype: int, aircraft:str, mpd_tasks_list: list, template_id: int, full_name: str, with_references: bool):
     """
     Фоновая асинхронная генерация taskcards.
     """
     try:
         self.update_state(state="PROGRESS", meta={"percent": 40, "step": "Generating taskcards"})
-        lost, create, files = generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id, full_name)
+        lost, create, files = generate_taskcards_new(atype, aircraft, mpd_tasks_list, template_id, full_name, with_references)
 
         self.update_state(state="PROGRESS", meta={"percent": 80, "step": "Zipping results"})
         zip_name = f"taskcards_{uuid.uuid4().hex}.zip"

@@ -27,3 +27,4 @@ class TaskTemplate(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     extension: Mapped[str] = mapped_column(String, nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=False)
+    reference:Mapped[bool] = mapped_column(Boolean, default=False)
