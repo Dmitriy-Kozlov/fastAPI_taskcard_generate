@@ -178,13 +178,14 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    table-layout: auto;
 }
 
 th {
     background: #f5f9ff;
     color: #2196f3;
     font-weight: 600;
-    text-align: left;
+    text-align: center;
     padding: 15px;
     border-bottom: 2px solid #e0e0e0;
 }
@@ -227,7 +228,6 @@ tr:hover {
     }
 
     table {
-        display: block;
         overflow-x: auto;
         white-space: nowrap;
     }
@@ -653,7 +653,7 @@ button[type="submit"]:hover {
     border-radius: 10px;
     box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     margin-bottom: 30px;
-
+}
 .spinner-overlay {
   position: fixed;
   top: 0;
@@ -674,4 +674,136 @@ button[type="submit"]:hover {
   width: 60px;
   height: 60px;
   animation: spin 1s linear infinite;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.full-width-btn {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+}
+
+/* Инпуты во встроенных формах */
+.input-mobile {
+    width: 100%;
+    padding: 7px 10px;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
+
+/* Форма под таблицей */
+.form-inline-mobile {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+
+@media screen and (max-width: 768px) {
+
+    .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+
+    .tabs {
+      width: 90%;
+      margin: 2px auto;
+    }
+
+    body {
+        padding: 10px !important;
+    }
+
+    .tab-content {
+        padding: 10px !important;
+    }
+
+    .table-responsive {
+        margin: 0 -10px; /* убрать сужение */
+        width: calc(100% + 20px);
+    }
+
+    .nav-bar {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px 15px;
+    }
+
+    .user-info {
+        order: 3;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .nav-title {
+        flex-grow: 1;
+    }
+
+    .nav-btn {
+        padding: 12px 18px;
+        font-size: 16px;
+    }
+
+    .menu-toggle {
+        order: 2;
+        margin-left: auto;
+    }
+
+     .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+
+    table tr {
+        display: block;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    table td {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 15px;
+        white-space: normal;
+    }
+
+    table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        margin-right: 10px;
+        color: #555;
+    }
+
+    /* Формы внутри таблицы — вертикальные */
+    .form-inline-mobile {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .tab-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .tab-btn {
+        flex: 1 1 45%;
+        font-size: 14px;
+        padding: 8px;
+    }
 }
