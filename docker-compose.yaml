@@ -68,6 +68,7 @@ services:
       depends_on:
         - redis
         - fastapi
+      restart: always
       environment:
         - DB_HOST=db
         - DB_PASS=admin
